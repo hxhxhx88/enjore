@@ -24,7 +24,7 @@ This document describes the whole product: a curated guide to notable restaurant
 ## Data flow
 
 - **Sources**: awards, their editions and the distinctions they hand out are managed as data in the admin.
-- **Import**: for each edition, an agent collects the recognized restaurants and writes them in through the server, with a reference for every accolade. The server resolves each entry to one restaurant identity.
+- **Import**: for each edition, an agent collects every recognized restaurant, whatever its region, and writes them in through the server, with a reference for every accolade. The server resolves each entry to one restaurant identity. An import is complete: nobody returns to an edition when another city's turn comes.
 - **Enrichment**: for each restaurant, an agent writes a canonical description from public information. Every other artifact is derived from it.
 - **Review and publish**: the operator reviews, edits, regenerates with notes, and publishes a snapshot.
 - **Presentation**: the public web and the mobile app read published snapshots only.
@@ -74,12 +74,18 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 
 ### Restaurant
 
-- A restaurant is one venue at one address. Chains have one record per venue.
-- It carries a native-script name as the restaurant writes it, in Hong Kong usually Traditional Chinese and English, plus display names per locale and a stable slug for URLs.
-- It carries a region code. v1 publishes Hong Kong only.
-- Facts we own: address, district, coordinates, phone, website, booking link, opening hours and business status (open, temporarily closed, permanently closed). They are sourced by the agent from the restaurant's own site and the guide listing, verified by the operator, and stored indefinitely. Each fact records its origin: manual, agent or system check.
+- A restaurant is one venue at one address. It can optionally belong to a chain, see "Chain" below.
+- It has one or more official names, each as the restaurant writes it and tagged with its language. In Hong Kong a restaurant commonly has both a Chinese and an English official name. One is marked primary. The apps show the name that best matches the viewer's locale, with the other alongside. It also has a stable slug for URLs.
+- It carries a region code. Every restaurant an edition recognizes is imported whatever its region; v1 enriches and publishes Hong Kong first.
+- Basics come from Google Places once the restaurant is resolved: address, district, coordinates, phone, website, opening hours and business status (open, temporarily closed, permanently closed). They are refreshed periodically. The operator or an agent can override any of them, and an overridden fact is not refreshed. Each fact records its origin: Places, agent or manual.
 - Identity: a Google place id once resolved, and one source reference per guide listing it was imported from. See "Identity" below.
-- Outbound links: Google Maps, 大众点评 (Dianping), OpenRice, Apple Maps and the official booking page. Only the Google Maps link is derived automatically.
+- Outbound links: Google Maps, 大众点评 (Dianping), OpenRice, Apple Maps and the official booking page. Links are resolved automatically one platform at a time, starting with Google Maps; see "Outbound links" below.
+
+### Chain
+
+- A chain groups the venues of one brand, such as the branches of a dim sum house. It is optional: most restaurants belong to none.
+- A chain has official names in the same form as a restaurant's, and a slug. Its branches are the restaurants that point to it.
+- Chains let the apps browse all branches of a brand, and they tell the resolver that two branches are distinct venues rather than duplicates.
 
 ### Award, tier, edition, accolade
 
@@ -92,11 +98,11 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 ### Marks
 
 - Distinctions render in a way that feels native to the source without hard-coding sources. The tier's glyph key selects a drawing from a registry in code, repeated by its count; ranked and scored awards render as marks like "#7" and "97.5/100". An unknown glyph key falls back to a generic mark, so a new award works the moment it is entered, and a new drawing is a small, isolated change.
-- The drawings are our own and evoke the distinction: a star, a diamond, a toque, a fork, a radish, a pin, a hat. We never reproduce a guide's logo or trademarked symbol, in the apps or on posters, and the award name and year always appear next to the mark.
+- The drawings are our own and evoke the distinction: a star, a diamond, a toque, a fork, a radish, a pin, a hat. We never reproduce a guide's logo or trademarked symbol, and the award name and year always appear next to the mark.
 
 ### Enrichment artifacts
 
-- Per restaurant: canonical description, poster brief, poster artwork, composed poster per locale, summary per locale, article per locale, structured profile, menu.
+- Per restaurant: canonical description, poster brief, poster artwork, summary per locale, article per locale, structured profile, menu.
 - Every artifact is stored as an immutable version with provenance: the job that produced it, the runner and model, the prompt version, and the upstream version it was derived from. Manual edits are versions too, with manual origin.
 - The newest version is the working version unless the operator pins one. Regeneration sees the current version and accepts notes from the operator.
 - Structured fields can be locked. A regeneration fills empty fields and never touches locked ones; replacing everything is an explicit choice.
@@ -106,14 +112,13 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 
 - An incoming entry is matched in this order: an existing source reference to the same guide listing, then the Google place id, then the operator's choice. The resolver proposes ranked candidates with distance and address similarity and accepts automatically only when confident. Everything else waits in the review inbox.
 - The same restaurant imported from two guides collapses onto one record and gains a second accolade.
-- Chains, relocations and renames are handled in the duplicates and merge flow. A venue that closes keeps its history and is withdrawn from publication.
-- Google Maps Platform terms allow storing place ids but restrict caching other Places content and forbid showing it on non-Google maps. We therefore use Places for resolution, the Maps link and periodic business-status checks, and we keep only our own facts (see "Restaurant"). Coordinates come from the listing or from a geocoder whose terms allow storage, such as the Hong Kong government address lookup. This split, and the choice of map provider for the apps, must be re-verified against the current terms before implementation.
+- Relocations and renames are handled in the duplicates and merge flow. Branches of a chain are distinct venues and are never merged. A venue that closes keeps its history and is withdrawn from publication.
 
 ### Publications
 
 - Publishing freezes a snapshot: the chosen version of each artifact and the set of verified accolades at that moment. Public apps read publications only.
 - Regeneration, agent writes and manual edits create candidates; what users see does not change until the operator publishes again.
-- A restaurant is publishable when it has its basics with coordinates, at least one verified accolade, a selected composed poster and a summary in the launch locale. Readiness is computed, never stored.
+- A restaurant is publishable when it has its basics with coordinates, at least one verified accolade, a selected poster and a summary in the launch locale. Readiness is computed, never stored.
 - Withdraw hides a restaurant from the public apps. Archive withdraws it and hides it from working lists, with a reason.
 
 ### Jobs
@@ -131,11 +136,10 @@ Work is tracked as jobs in one queue. Two classes exist:
 | Outbound links                  | Agent job   | Claude on the owner's subscription   |
 | Resolve identity                | System task | Trigger.dev worker                   |
 | Render poster artwork           | System task | Trigger.dev worker, OpenAI image API |
-| Compose poster and derivatives  | System task | Trigger.dev worker                   |
-| Business status check           | System task | Trigger.dev worker, periodic         |
+| Refresh basics from Places      | System task | Trigger.dev worker, periodic         |
 
 - Agent jobs need web research and judgment. System tasks are deterministic code.
-- The server owns the chain: when a canonical description lands it enqueues the derived artifacts, and when a poster brief lands it enqueues rendering, then composition.
+- The server owns the chain: when a canonical description lands it enqueues the derived artifacts, and when a poster brief lands it enqueues rendering.
 
 ## Enrichment pipeline
 
@@ -148,8 +152,9 @@ Work is tracked as jobs in one queue. Two classes exist:
 
 ### Structured profile
 
-- Covers the factors people weigh when choosing a restaurant: cuisines, price band per person, meal periods, occasions (date, solo, business, family, friends, celebration, group, hosting visitors), ambience, dress code, reservation policy and difficulty, menu format (tasting only, à la carte, set lunch, omakase), dietary options, seating and private rooms, children, pets, accessibility, payment including Alipay and WeChat Pay, service charge and corkage, Mandarin-speaking staff and Chinese menu, nearest MTR station and exit, signature dishes, chef, opening hours, year established.
-- Informed by [schema.org/Restaurant](https://schema.org/Restaurant) where it fits, extended with what our audience needs.
+- Starts small, with factors that are universal to dining rather than specific to Hong Kong, and that public information reliably answers: cuisines, price band per person, occasions (date, solo, business, family, friends, celebration, group), meal periods (breakfast, brunch, lunch, afternoon tea, dinner, late night), formality (casual, smart casual, fine dining), reservation policy (walk-in, recommended, required), menu format (à la carte, tasting menu, both), signature dishes.
+- More factors are added one at a time when they pass the same two tests. Local or hard-to-verify facts, such as transit access, payment methods or the languages staff speak, stay out until then.
+- Informed by [schema.org/Restaurant](https://schema.org/Restaurant) where it fits.
 - Values are locale-independent: controlled vocabularies, numbers, and yes, no or unknown. Labels live in the apps' translations. Free text such as signature dish notes lives in the per-locale content.
 - Stored as JSON validated by a shared schema in `packages/lib/src/schemas/`.
 
@@ -162,10 +167,10 @@ Work is tracked as jobs in one queue. Two classes exist:
 ### Poster
 
 - The poster is the most important artifact: a horizontal 16:9 image from which a user feels what the restaurant is at a glance.
-- It has two layers. An image model renders text-free artwork from a poster brief. Code then composites the typography: the Chinese name first, the English name second, a kicker with cuisine and district, and the award marks. Image models render Chinese text unreliably, a composed layer gives every poster the same typographic voice, and a new locale needs no new artwork.
-- The brief is written from the canonical description. It chooses the medium that fits the restaurant (editorial illustration, ink wash, oil painting, photoreal still life, collage, and so on), the motifs, the palette and the composition. A versioned house-style brief constrains every poster: a clear title area, safe margins, palettes that sit well on dark backgrounds, no text, no logos, no recognizable people, no trademarks.
+- It is pure artwork and carries no text. An image model renders it from a poster brief. Names, cuisine, district and award marks are rendered by the apps next to the poster, so one poster serves every locale and nothing competes with the image.
+- The brief is written from the canonical description. It chooses the medium that fits the restaurant (editorial illustration, ink wash, oil painting, photoreal still life, collage, and so on), the motifs, the palette and the composition. A versioned house-style brief constrains every poster: palettes that sit well on dark backgrounds, no text, no logos, no recognizable people, no trademarks.
 - Several variants are rendered per brief. The operator picks one, pins it, or asks for another round with notes. An automated check rejects artwork that contains text.
-- Artwork, composed posters and the derivatives the apps need are stored in object storage and served through its public domain.
+- Artwork and the derivatives the apps need are stored in object storage and served through its public domain.
 - Articles may later embed additional illustrations produced by the same pipeline, never crawled photos.
 
 ### Summary and article
@@ -175,14 +180,14 @@ Work is tracked as jobs in one queue. Two classes exist:
 
 ### Outbound links
 
-- Google Maps follows from the place id.
-- 大众点评 (Dianping) is a closed ecosystem, so its link is filled by hand. When it is missing, the apps offer a name search on Dianping instead.
-- OpenRice, the dominant local platform, and Apple Maps are optional links. The official booking page is kept when it exists.
+- Links are resolved automatically, one platform at a time. Google Maps comes first and follows from the place id. 大众点评 (Dianping) is next, and how to link it automatically is worked out as its own step. OpenRice, the dominant local platform, and Apple Maps follow.
+- Until a platform's resolver exists, its link is filled by hand. While the Dianping link is missing, the apps offer a name search on Dianping instead.
+- The official booking page is kept when it exists.
 
 ### Locales
 
 - Locale codes follow the repo: `zh-cn` at launch, `zh-hk` and `en-us` later.
-- Adding a locale adds content jobs and poster compositions, not schema.
+- Adding a locale adds content jobs, not schema.
 
 ## Automation strategy
 
@@ -199,12 +204,12 @@ Work is tracked as jobs in one queue. Two classes exist:
 
 ### System tasks
 
-- Rendering, composition, identity resolution and periodic checks run on Trigger.dev, which gives retries, long runs and logs. They report results through the same server write path as agents, with their own token, so validation, provenance and chaining live in one place.
+- Rendering, identity resolution and periodic refreshes from Places run on Trigger.dev, which gives retries, long runs and logs. They report results through the same server write path as agents, with their own token, so validation, provenance and chaining live in one place.
 
 ### Paid services
 
 - Claude cannot generate images, and ChatGPT's write-capable connectors confirm each action, so neither can drive poster rendering unattended. Artwork therefore comes from the OpenAI image API at the highest quality settings. The cost per image is small next to the value of the poster.
-- Google Places for resolution within its free allowance, Cloudflare R2 for images, Trigger.dev for system tasks. Everything else runs on the existing Vercel and Neon setup.
+- Google Places for resolution and basics, Cloudflare R2 for images, Trigger.dev for system tasks. Everything else runs on the existing Vercel and Neon setup.
 
 ### Safety
 
@@ -227,7 +232,7 @@ Work is tracked as jobs in one queue. Two classes exist:
 - Map view, in the spirit of Apple Maps: a full-screen map with restaurant markers and the user's location, a horizontally scrollable strip of poster cards at the bottom, and a bottom sheet with the detail when a marker or a card is tapped, swiped down to close.
 - List view: one full-width 16:9 poster card per restaurant with the summary and award marks, for when distance does not matter.
 - Detail: poster, summary, marks, article, structured profile, menu, and buttons that open the restaurant in Google Maps and Dianping.
-- Dark, high-end, calm. The map provider is chosen together with the Places terms decision above.
+- Dark, high-end, calm.
 - The app reads a read API over publications, because server actions are not available to it.
 
 ### Order
@@ -242,7 +247,7 @@ Work is tracked as jobs in one queue. Two classes exist:
 - Crowd reviews and ratings, ours or imported.
 - Bookings.
 - More than one operator, roles or permissions.
-- Cities other than Hong Kong, including Macau.
+- Enriching and publishing cities other than Hong Kong. Their restaurants are still imported with every edition.
 - Locales other than Simplified Chinese.
 - Menus from photos.
 - Recommendations and personalization.
@@ -250,12 +255,11 @@ Work is tracked as jobs in one queue. Two classes exist:
 ## Risks and open questions
 
 - **Guide sites may block agents**: imports fall back to secondary sources such as press coverage, to a pasted list, and to count checks against the expected number of entries.
-- **Dianping stays manual**: there is no reliable automated way to find a shop link. The name-search fallback keeps the button useful.
+- **Link resolution beyond Google Maps**: automatic linking to Dianping, OpenRice and Apple Maps is worked out one platform at a time. Until then those links are manual and the apps fall back to a name search.
 - **Subscription limits**: how many restaurants one night can enrich is unknown until measured. Priority ordering keeps partial runs useful, and a pay-as-you-go runner on the same tools is the escape hatch.
 - **Images and marks**: generated artwork must not contain text, logos or recognizable people; distinctions are rendered with our own drawings and attribution. Whether any official mark may be used is for the owner to settle with the guides.
-- **Google terms**: the split between stored facts and Places content, and the map provider for the apps, must be checked against the current Google Maps Platform terms before implementation.
 - **Stale menus and closures**: capture dates are shown and business status is checked periodically; closures surface in the review inbox.
-- **Identity edge cases**: chains, relocations and renames need operator judgment; the merge flow exists for them.
+- **Identity edge cases**: relocations, renames and branches of a chain need operator judgment; the merge flow and the chain entity exist for them.
 
 ## Related documents
 

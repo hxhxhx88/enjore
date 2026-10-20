@@ -45,7 +45,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 ### Import an edition
 
-- "Import with agent" enqueues an edition import job and sets the edition to importing. The agent finds the official list and submits every entry it contains, whatever its region, with name, address, the facets it holds and the reference URL. It reports the total it found. An import is complete or it is not done: once an edition is imported, nobody returns to it when another city's turn comes.
+- "Import with agent" enqueues an edition import job and sets the edition to importing. The agent finds the official list and submits every entry it contains, whatever its region, with every official name it finds and which one it proposes as canonical from the nature of the restaurant, the address, the facets it holds and the reference URL. The other names are stored as translations of the name. It reports the total it found. An import is complete or it is not done: once an edition is imported, nobody returns to it when another city's turn comes.
 - "Copy prompt" shows the same instructions for pasting into Claude or ChatGPT, together with the result format. "Paste a list" accepts that result, or any list the operator assembled, and runs it through the same resolver.
 - Each submitted entry is resolved to a restaurant (see "Resolve a restaurant"). A resolved entry creates an unverified accolade, and a new restaurant tagged with its region when none existed. An unresolved entry waits in the inbox with the candidates the resolver found.
 - The edition page shows the expected count, the submitted count, the resolved and unresolved counts, and the accolade table: restaurant, facets, reference, origin, verified.
@@ -60,7 +60,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 ### Edit basics and links
 
-- Basics: official names (one or more, each with its language, one primary), slug, chain (optional: pick an existing chain or create one), region, address, district, coordinates with a map preview, phone, website, booking link, opening hours, business status. Facts from Places are filled in at resolution. Every fact shows its origin: Places, agent or manual. A fact the operator edits becomes manual and is no longer refreshed.
+- Basics: canonical name with its language, the other official names as translations of the name with "Make canonical" to swap, slug, chain (optional: pick an existing chain or create one), region, address, district, coordinates with a map preview, phone, website, booking link, opening hours, business status. Facts from Places are filled in at resolution. Every fact shows its origin: Places, agent or manual. A fact the operator edits becomes manual and is no longer refreshed.
 - "Refresh from Places" updates every fact that is not manual and records the date. The same refresh runs periodically.
 - Links: Google Maps is derived from the place id and can be overridden. Links to 大众点评 (Dianping), OpenRice and Apple Maps are filled by hand until their resolvers exist, Dianping first. While the Dianping link is empty, the field explains that the apps fall back to "Search on Dianping". The booking page is kept when it exists.
 
@@ -166,6 +166,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - Import Asia's 50 Best 2025 after the Michelin import. A restaurant present in both ends up as one record with two accolades. A wrong match is found in the duplicates section and fixed by merging.
 - The cloud task is unavailable: open a queued job, "Copy prompt", run it in claude.ai, "Paste result". The artifact is saved with manual origin.
 - Try to publish a restaurant without a selected poster. The checklist blocks it and names the missing item.
+- Import a Cantonese restaurant that carries a Chinese and an English official name: the Chinese name becomes canonical and the English name its translation. For an Italian restaurant the English name is canonical. Either choice can be swapped with "Make canonical".
 - Create a chain for a dim sum brand and attach its three branches. The restaurant list filters by chain, and the duplicates section stops proposing the branches as duplicates of each other.
 - Lock three profile fields and click "Regenerate". The locked fields are untouched and the empty ones are filled.
 - Regenerate the summary of a published restaurant. The public apps still show the old one until "Publish again".

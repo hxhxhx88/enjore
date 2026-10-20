@@ -75,7 +75,7 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 ### Restaurant
 
 - A restaurant is one venue at one address. It can optionally belong to a chain, see "Chain" below.
-- It has one or more official names, each as the restaurant writes it and tagged with its language. In Hong Kong a restaurant commonly has both a Chinese and an English official name. One is marked primary. The apps show the name that best matches the viewer's locale, with the other alongside. It also has a stable slug for URLs.
+- It has one canonical name, in its native language, and records which language that is. A restaurant with several native names, common in Hong Kong where a venue carries both a Chinese and an English official name, gets one of them as canonical by the nature of the restaurant: the Chinese name for a Cantonese kitchen, the English or Italian name for an Italian one. The other official names are kept as translations of the name, see "Locales and translations". The apps show the translation for the viewer's locale when one exists, with the canonical name alongside when it differs. It also has a stable slug for URLs.
 - It carries a region code. Every restaurant an edition recognizes is imported whatever its region; v1 enriches and publishes Hong Kong first.
 - Basics come from Google Places once the restaurant is resolved: address, district, coordinates, phone, website, opening hours and business status (open, temporarily closed, permanently closed). They are refreshed periodically. The operator or an agent can override any of them, and an overridden fact is not refreshed. Each fact records its origin: Places, agent or manual.
 - Identity: a Google place id once resolved, and one source reference per guide listing it was imported from. See "Identity" below.
@@ -84,7 +84,7 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 ### Chain
 
 - A chain groups the venues of one brand, such as the branches of a dim sum house. It is optional: most restaurants belong to none.
-- A chain has official names in the same form as a restaurant's, and a slug. Its branches are the restaurants that point to it.
+- A chain has a canonical name in the same form as a restaurant's, and a slug. Its branches are the restaurants that point to it.
 - Chains let the apps browse all branches of a brand, and they tell the resolver that two branches are distinct venues rather than duplicates.
 
 ### Award, tier, edition, accolade
@@ -184,10 +184,12 @@ Work is tracked as jobs in one queue. Two classes exist:
 - Until a platform's resolver exists, its link is filled by hand. While the Dianping link is missing, the apps offer a name search on Dianping instead.
 - The official booking page is kept when it exists.
 
-### Locales
+### Locales and translations
 
 - Locale codes follow the repo: `zh-cn` at launch, `zh-hk` and `en-us` later.
-- Adding a locale adds content jobs, not schema.
+- Every user-facing field is stored once, in its canonical form, in the language native to the record: a restaurant's name in the restaurant's own language, an authored label in the language it was written in. Translations for other locales live in one general translation table keyed by table, record, field and locale, and overlay the canonical value when the apps render that locale. The table arrives with the first translation work; until then the schema stays ready for it by never adding per-locale columns.
+- Long-form generated content, the summary and the article, is written natively per locale from the canonical description rather than translated, so it is an artifact per locale.
+- Adding a locale adds content jobs and translation rows, not schema.
 
 ## Automation strategy
 

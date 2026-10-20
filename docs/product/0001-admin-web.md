@@ -99,7 +99,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 ### Merge duplicates
 
-- The duplicates section lists candidates: same place id, same source reference, or a close name within walking distance. Branches of the same chain are excluded.
+- The duplicates section lists candidates: same place id, same source reference, or a close name within walking distance. Two branches of the same chain are distinct restaurants, each with its own record and accolades, so they are never proposed as candidates for merging.
 - "Merge" asks which record survives. Accolades, source references, artifacts and links of the other record move to the survivor, conflicting facts are shown for a choice, and the merged record is archived with a pointer to the survivor. The survivor's publication is not changed by the merge.
 
 ### Run agents

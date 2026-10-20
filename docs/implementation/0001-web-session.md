@@ -1,6 +1,6 @@
 # Web session
 
-How `apps/app-next` signs users in and keeps them signed in. The product behavior is specified in `docs/product/0001-unified-auth.md`; this document fixes the technical rules.
+How `apps/app-next` signs users in and keeps them signed in. The product behavior is a unified passwordless flow: the user enters an email, receives a one-time code and is signed in, with an account created on first sign-in. This document fixes the technical rules.
 
 ## Sign-in code
 

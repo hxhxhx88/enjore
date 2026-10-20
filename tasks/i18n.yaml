@@ -1,0 +1,8 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Extract translation strings
+    cmds:
+      - pnpm extract
+    dir: packages/i18n

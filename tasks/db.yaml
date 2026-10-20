@@ -1,0 +1,101 @@
+version: '3'
+
+_dsn: &dsn
+  preconditions:
+    - sh: '[ -n "$DATABASE_URL" ]'
+      msg: missing DATABASE_URL
+
+tasks:
+  dev:
+    desc: Run database migrations
+    cmds:
+      - pnpm --filter db run migrate -- dev {{ .CLI_ARGS }}
+
+  new:
+    desc: Create a migration without applying it (task db:new -- --name <name>)
+    cmds:
+      - pnpm --filter db run migrate -- dev --create-only {{ .CLI_ARGS }}
+
+  deploy:
+    desc: Deploy database migrations
+    cmds:
+      - pnpm --filter db run migrate -- deploy
+
+  gen:
+    desc: Generate Prisma client
+    cmds:
+      - pnpm --filter db generate
+
+  status:
+    desc: Show migration status
+    cmds:
+      - pnpm --filter db status
+
+  reset:
+    desc: Reset the database (task db:reset -- ...)
+    cmds:
+      - pnpm --filter db reset {{ .CLI_ARGS }}
+
+  # task db:dump:data -- local/db.dump
+  dump:data:
+    desc: Dump database data only (task db:dump:data -- local/db.dump)
+    <<: *dsn
+    vars:
+      TIMESTAMP:
+        sh: date +"%Y%m%d-%H%M%S"
+      SAVE_PATH: local/db-data-{{ .TIMESTAMP }}.dump
+    cmds:
+      - pg_dump -Fc -v --data-only -d "{{ .DATABASE_URL }}" --exclude-table-data _prisma_migrations --schema public -f
+        {{ .SAVE_PATH }}
+      - echo "dump saved at {{ .SAVE_PATH }}"
+
+  # task db:restore:data -- local/db.dump
+  restore:data:
+    desc: Restore database data from dump (task db:restore:data -- local/db.dump)
+    <<: *dsn
+    cmds:
+      - pg_restore -v --data-only -d "{{ .DATABASE_URL }}" {{ .CLI_ARGS }}
+
+  # task db:dump:all
+  dump:all:
+    desc: Dump full database (schema and data)
+    <<: *dsn
+    vars:
+      TIMESTAMP:
+        sh: date +"%Y%m%d-%H%M%S"
+      SAVE_PATH: local/db-all-{{ .TIMESTAMP }}.dump
+    cmds:
+      - pg_dump -Fc -v -d "{{ .DATABASE_URL }}" --schema public -f {{ .SAVE_PATH }}
+      - echo "dump saved at {{ .SAVE_PATH }}"
+
+  # task db:restore:all -- local/db.dump
+  restore:all:
+    desc: Restore full database from dump (task db:restore:all -- local/db.dump)
+    <<: *dsn
+    cmds:
+      - pg_restore -v --section=pre-data --no-owner -d "{{ .DATABASE_URL }}" {{ .CLI_ARGS }} || true
+      - pg_restore -v --data-only -d "{{ .DATABASE_URL }}" {{ .CLI_ARGS }} || true
+      - pg_restore -v --section=post-data -d "{{ .DATABASE_URL }}" {{ .CLI_ARGS }}
+
+  dump:gz:
+    desc: Dump database to gzipped SQL file
+    <<: *dsn
+    cmds:
+      - pg_dump -d "{{ .DATABASE_URL }}" -Fp | gzip > local/db-$(date +"%Y%m%d-%H%M%S").sql.gz
+
+  # task db:restore:gz -- xxx.sql.gz
+  restore:gz:
+    desc: Restore database from gzipped SQL (task db:restore:gz -- xxx.sql.gz)
+    <<: *dsn
+    cmds:
+      - gunzip -c {{ .CLI_ARGS }} | psql "{{ .DATABASE_URL }}"
+
+  up:
+    desc: Start the local PostgreSQL container
+    cmds:
+      - docker compose up -d --wait db
+
+  down:
+    desc: Stop the local PostgreSQL container
+    cmds:
+      - docker compose down

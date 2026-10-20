@@ -1,0 +1,10 @@
+version: '3'
+
+tasks:
+  # task ui:web -- [component]
+  # Uses the shadcn CLI version pinned in packages/ui-web so generated code matches the installed registry style.
+  web:
+    desc: Add shadcn component to ui-web (task ui:web -- [component])
+    cmds:
+      - pnpm exec shadcn add {{ .CLI_ARGS }}
+    dir: packages/ui-web

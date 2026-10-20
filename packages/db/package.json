@@ -1,0 +1,27 @@
+{
+  "name": "@repo/db",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "migrate": "prisma migrate",
+    "generate": "prisma generate",
+    "status": "prisma migrate status",
+    "reset": "prisma migrate reset",
+    "postinstall": "prisma generate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/adapter-neon": "catalog:",
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
+    "@t3-oss/env-core": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/ts-config": "workspace:*",
+    "prisma": "catalog:"
+  }
+}

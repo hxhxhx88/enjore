@@ -1,0 +1,22 @@
+{
+  "name": "example-web",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "catalog:",
+    "@lingui/react": "catalog:",
+    "@repo/ui-web": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "immer": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-hook-form": "catalog:",
+    "zod": "catalog:",
+    "zustand": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/ts-config": "workspace:*",
+    "@types/react": "catalog:"
+  }
+}

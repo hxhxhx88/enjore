@@ -1,0 +1,53 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// A pending verification of any kind, for example a sign-in code. The row id is the public code the client keeps
+// between the two steps. What is being verified lives in the payload, so a new verification type only needs a new
+// payload schema and no database change. The secret code is stored hashed and never leaves the server.
+model Verification {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @map(name: "updated_at") @db.Timestamptz
+
+  codeHash    String   @map(name: "code_hash")
+  payloadJson String   @map(name: "payload") // packages/lib/src/schemas/verification-payload.ts
+  attempts    Int      @default(0) @map(name: "attempts")
+  expiresAt   DateTime @map(name: "expires_at") @db.Timestamptz
+
+  @@map(name: "verifications")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @map(name: "updated_at") @db.Timestamptz
+
+  email String @unique @map(name: "email")
+
+  sessions Session[]
+
+  @@map(name: "users")
+}
+
+// A signed-in browser. The id is the hash of the random token stored in the session cookie, so a database leak does
+// not expose usable cookies.
+model Session {
+  id        String   @id
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @map(name: "updated_at") @db.Timestamptz
+
+  userId String @map(name: "user_id")
+
+  expiresAt DateTime @map(name: "expires_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map(name: "sessions")
+}

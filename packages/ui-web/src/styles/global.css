@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+@import '@repo/ui-config/global.css';
+
+/*
+  Shared shadcn Tailwind layer: the `data-open`/`data-closed` style variants and animation utilities that the generated
+  primitives rely on. It is provided by the `shadcn` package, which is why the CLI stays a runtime dependency.
+*/
+@import 'shadcn/tailwind.css';
+@source "..";

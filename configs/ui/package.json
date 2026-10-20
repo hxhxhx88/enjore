@@ -1,0 +1,11 @@
+{
+  "name": "@repo/ui-config",
+  "private": true,
+  "exports": {
+    "./global.css": "./global.css",
+    "./colors": "./colors.ts"
+  },
+  "devDependencies": {
+    "tw-animate-css": "catalog:"
+  }
+}

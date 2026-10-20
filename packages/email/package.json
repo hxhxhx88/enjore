@@ -1,0 +1,28 @@
+{
+  "name": "@repo/email",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.tsx"
+  },
+  "scripts": {
+    "dev": "email dev --port 3333 --dir src/templates",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/lib": "workspace:*",
+    "@repo/ui-config": "workspace:*",
+    "@t3-oss/env-core": "catalog:",
+    "postmark": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-email": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@react-email/ui": "catalog:",
+    "@repo/ts-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:"
+  }
+}

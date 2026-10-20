@@ -1,0 +1,8 @@
+{
+  "extends": ["@repo/ts-config/react"],
+  "compilerOptions": {
+    "paths": {
+      "@repo/ui-web/*": ["./src/*"]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "extends": ["./browser"],
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}

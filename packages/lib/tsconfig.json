@@ -1,0 +1,8 @@
+{
+  "extends": ["@repo/ts-config/base"],
+  "compilerOptions": {
+    "paths": {
+      "@repo/lib/*": ["./src/*"]
+    }
+  }
+}

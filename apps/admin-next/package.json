@@ -1,0 +1,36 @@
+{
+  "name": "admin-next",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "typegen": "next typegen"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "catalog:",
+    "@repo/db": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@repo/ts-config": "workspace:*",
+    "@repo/ui-config": "workspace:*",
+    "@repo/ui-web": "workspace:*",
+    "@t3-oss/env-nextjs": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "immer": "catalog:",
+    "lucide-react": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-hook-form": "catalog:",
+    "zod": "catalog:",
+    "zustand": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "babel-plugin-react-compiler": "catalog:"
+  }
+}

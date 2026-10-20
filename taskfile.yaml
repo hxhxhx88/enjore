@@ -1,0 +1,94 @@
+version: '3'
+
+dotenv: [.env.local]
+
+vars:
+  COMMIT_HASH:
+    sh: git rev-parse --short=7 HEAD 2>/dev/null || true
+
+includes:
+  db: tasks/db.yaml
+  ui: tasks/ui.yaml
+  i18n: tasks/i18n.yaml
+
+tasks:
+  dev:
+    desc: Start the development server
+    cmds:
+      - pnpm dev {{ .CLI_ARGS }}
+
+  typegen:
+    desc: Generate TypeScript types
+    cmds:
+      - pnpm typegen {{ .CLI_ARGS }}
+
+  typecheck:
+    desc: Run TypeScript type checking
+    deps:
+      - typegen
+    cmds:
+      - pnpm typecheck {{ .CLI_ARGS }}
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - pnpm test {{ .CLI_ARGS }}
+
+  build:
+    desc: Build the project
+    deps:
+      - check
+    cmds:
+      - pnpm build
+
+  # allow running pnpm commands with environment variables
+  # task pnpm -- ...
+  pnpm:
+    desc: Run pnpm commands with environment variables (task pnpm -- ...)
+    cmds:
+      - pnpm {{ .CLI_ARGS }}
+
+  ip:
+    desc: Print local IP address (en0)
+    cmds:
+      - ipconfig getifaddr en0
+
+  check:
+    desc: Run lint, tests and preconditions
+    deps:
+      - typecheck
+      - test
+      - i18n
+    preconditions:
+      - sh: grep "[[:digit:]]rem" packages/ui-web/src/primitives/*.tsx && exit 1 || exit 0
+        msg: some web UI primitives are using rem units
+      - sh: |
+          for file in packages/i18n/locales/*/*.po; do
+            if sed '1,2d' "$file" | grep -q 'msgstr ""'; then
+              exit 1
+            fi
+          done
+          exit 0
+        msg: some translations are missing
+      - sh: node configs/ui/check-colors.ts
+        msg: configs/ui/colors.ts is out of sync with configs/ui/global.css
+    cmds:
+      - pnpm lint {{ .CLI_ARGS }}
+      - pnpm knip
+
+  fix:
+    desc: Fix lint and formatting issues
+    cmds:
+      - pnpm lint:fix {{ .CLI_ARGS }}
+
+  npkill:
+    desc: Find and remove node_modules directories
+    cmds:
+      - npx npkill
+
+  # task cli -- [command] [...flags]
+  cli:
+    desc: Run a CLI action
+    cmds:
+      - bun run src/index.ts {{ .CLI_ARGS }}
+    dir: apps/cli-bun

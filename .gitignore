@@ -1,0 +1,46 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+.pnpm-store/
+
+# debug and logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# turbo
+.turbo
+
+# tests
+coverage/
+
+# Next.js
+apps/*/.next/
+apps/*/out/
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# The local folder for putting any temporary files.
+/.local
+
+# Prisma
+packages/db/generated/
+
+# Claude Code
+.claude/*
+!.claude/skills/

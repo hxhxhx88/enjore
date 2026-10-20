@@ -1,0 +1,8 @@
+{
+  "extends": ["@repo/ts-config/server"],
+  "compilerOptions": {
+    "paths": {
+      "@repo/i18n/*": ["./src/*"]
+    }
+  }
+}

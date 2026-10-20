@@ -1,0 +1,46 @@
+{
+  "name": "app-next",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "typegen": "next typegen"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "catalog:",
+    "@lingui/core": "catalog:",
+    "@lingui/react": "catalog:",
+    "@repo/db": "workspace:*",
+    "@repo/email": "workspace:*",
+    "@repo/i18n": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@repo/ts-config": "workspace:*",
+    "@repo/ui-config": "workspace:*",
+    "@repo/ui-web": "workspace:*",
+    "@t3-oss/env-nextjs": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "immer": "catalog:",
+    "input-otp": "catalog:",
+    "lucide-react": "catalog:",
+    "negotiator": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-hook-form": "catalog:",
+    "react-markdown": "catalog:",
+    "server-only": "catalog:",
+    "zod": "catalog:",
+    "zustand": "catalog:"
+  },
+  "devDependencies": {
+    "@lingui/loader": "catalog:",
+    "@lingui/swc-plugin": "catalog:",
+    "@tailwindcss/postcss": "catalog:",
+    "@types/negotiator": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:"
+  }
+}

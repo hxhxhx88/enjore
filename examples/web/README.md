@@ -1,0 +1,1 @@
+This package is intended solely for documentation and demonstration purposes. Do not import its code into other projects. Always review and update these files manually. Avoid automated or AI-driven updates.

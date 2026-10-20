@@ -1,0 +1,8 @@
+{
+  // Root-level TypeScript files that belong to no workspace. Type-aware lint rules need every file in a project.
+  "extends": ["./configs/ts/server"],
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["vitest.config.ts", "configs/ui/*.ts"]
+}

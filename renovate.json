@@ -1,0 +1,31 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "group:allNonMajor"],
+  "schedule": ["before 6am on monday"],
+  "minimumReleaseAge": "3 days",
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Next.js 16.3+ needs a Lingui SWC plugin built for its SWC runner (lingui/swc-plugin#253).",
+      "matchPackageNames": ["next", "@next/eslint-plugin-next"],
+      "allowedVersions": "<16.3.0"
+    },
+    {
+      "description": "@lingui/swc-plugin 6.7+ targets a newer SWC runner than Next.js 16.2 ships.",
+      "matchPackageNames": ["@lingui/swc-plugin"],
+      "allowedVersions": "<6.7.0"
+    },
+    {
+      "description": "typescript-eslint cannot run on TypeScript 7 until the TypeScript 7.1 API lands.",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7.0.0"
+    },
+    {
+      "description": "Prisma 8 is still a release candidate.",
+      "matchPackageNames": ["prisma", "@prisma/{/,}**"],
+      "allowedVersions": "<8.0.0"
+    }
+  ]
+}

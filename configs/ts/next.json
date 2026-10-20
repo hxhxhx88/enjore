@@ -1,0 +1,7 @@
+{
+  "extends": ["./browser"],
+  "compilerOptions": {
+    "jsx": "preserve",
+    "plugins": [{ "name": "next" }]
+  }
+}

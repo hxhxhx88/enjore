@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["extract", "shadcn"],
+  "workspaces": {
+    "apps/app-next": {
+      "ignoreDependencies": ["@lingui/loader", "@lingui/swc-plugin"]
+    },
+    "configs/ui": {
+      "entry": ["check-colors.ts"]
+    },
+    "examples/*": {
+      "entry": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/db": {
+      "ignore": ["prisma/**"],
+      "ignoreDependencies": ["@prisma/client"]
+    },
+    "packages/i18n": {
+      "entry": ["lingui.config.ts"]
+    }
+  }
+}

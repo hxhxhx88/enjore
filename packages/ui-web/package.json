@@ -1,0 +1,29 @@
+{
+  "name": "@repo/ui-web",
+  "exports": {
+    "./*": "./src/*.tsx",
+    "./lib/*": "./src/lib/*.ts",
+    "./global.css": "./src/styles/global.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@base-ui/react": "catalog:",
+    "@tanstack/react-table": "catalog:",
+    "class-variance-authority": "catalog:",
+    "cn": "catalog:",
+    "input-otp": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "shadcn": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/ts-config": "workspace:*",
+    "@repo/ui-config": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "tailwindcss": "catalog:"
+  }
+}

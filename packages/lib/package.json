@@ -1,0 +1,17 @@
+{
+  "name": "@repo/lib",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "culori": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/ts-config": "workspace:*",
+    "@types/culori": "catalog:"
+  }
+}

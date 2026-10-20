@@ -1,0 +1,9 @@
+{
+  "extends": ["@repo/ts-config/server"],
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["bun"]
+  }
+}

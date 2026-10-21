@@ -11,9 +11,9 @@ function isSet(value: string | undefined): boolean {
   return value !== undefined && value !== ''
 }
 
-// "Settings" reports whether each integration and runner secret is configured, from the presence of its variables.
-// Values never leave this module. The first rows are mandatory for the app to boot and are listed for completeness, so
-// the page covers every integration. Later milestones append their rows here.
+// "Settings" lists each integration and runner secret with the variables behind it and whether they are set. Every
+// variable is mandatory for the app to boot, so the page is an inventory of what the deployment carries rather than a
+// report of gaps; values never leave this module. Later milestones append their rows here.
 export function readSettings(): SettingRow[] {
   return [
     { name: 'Database', variables: ['DATABASE_URL'], configured: isSet(env.DATABASE_URL) },

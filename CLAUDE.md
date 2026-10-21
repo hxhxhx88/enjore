@@ -19,6 +19,7 @@ This file orients Claude in this repo. Keep it lean. Deep content lives in `docs
   - `docs/development/0002-rules/` — naming, exports, writing style.
   - `docs/development/0003-coding/` — patterns: form, modal, server action, schemas, enum, runtime error, etc.
   - `docs/implementation/` — technical specs and architectural design.
+  - `docs/implementation/admin/` — admin roadmap and milestone plans.
   - `docs/product/`, `docs/deployment/`.
 - `CONTRIBUTING.md` is the human-facing overview of the repo.
 

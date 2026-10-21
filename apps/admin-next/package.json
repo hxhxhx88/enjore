@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "catalog:",
+    "@modelcontextprotocol/server": "catalog:",
     "@repo/db": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/ts-config": "workspace:*",
@@ -23,6 +24,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
+    "server-only": "catalog:",
     "zod": "catalog:",
     "zustand": "catalog:"
   },

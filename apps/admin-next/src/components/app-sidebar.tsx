@@ -3,31 +3,31 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
+  SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from '@repo/ui-web/primitives/sidebar'
-import Link from 'next/link'
+import { AwardIcon, LayoutDashboardIcon, SettingsIcon } from 'lucide-react'
 import { routes } from '@/lib/routes'
+import { AppSidebarItem } from './app-sidebar-item'
 
 export function AppSidebar(): JSX.Element {
   return (
     <Sidebar>
+      <SidebarHeader>
+        <span className="px-2 py-1 text-sm font-medium">Restaurants admin</span>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton render={<Link href={routes.home} />}>
-                Home
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton render={<Link href={routes.users.list} />}>
-                Users
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <AppSidebarItem href={routes.home} icon={<LayoutDashboardIcon />}>
+              Dashboard
+            </AppSidebarItem>
+            <AppSidebarItem href={routes.awards.list} icon={<AwardIcon />}>
+              Awards
+            </AppSidebarItem>
+            <AppSidebarItem href={routes.settings} icon={<SettingsIcon />}>
+              Settings
+            </AppSidebarItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

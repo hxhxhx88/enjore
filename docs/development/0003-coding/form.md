@@ -31,3 +31,4 @@ See `examples/web/src/form` for detailed examples and explanations.
 - Finally, add `index.ts` to define exposed things to the outside.
   - Usually only a `Form`, a `FormProvider`, and a `FormType` are exposed.
   - Occasionally, if we want to allow the caller to manage the form, we can expose some hooks.
+  - Server actions re-validate their input with the form's schema, so `index.ts` also exposes `formSchema` (and any pure mappers between form values and database rows). Mark `form.tsx` with `'use client'`: a server action importing the index pulls it into the server graph, where react-hook-form resolves to a build without hooks.

@@ -1,6 +1,6 @@
 # Admin web
 
-The admin web is the factory: where awards are defined, restaurants imported, profiles enriched, reviewed and published. It lives in `apps/admin-next`. The product context, domain model and automation strategy are in `docs/product/0000-project-overview.md`; this document specifies what the admin does and how it behaves. Technical rules such as schema, tool definitions, lease timings, storage layout and environment variables will be fixed in `docs/implementation/0003-enrichment-pipeline.md` as the implementation lands.
+The admin web is the factory: where awards are defined, restaurants imported, profiles enriched, reviewed and published. It lives in `apps/admin-next`. The product context, domain model and automation strategy are in `docs/product/0000-project-overview.md`; this document specifies what the admin does and how it behaves. Technical rules such as schema, tool definitions, lease timings, storage layout and environment variables will be fixed in `docs/implementation/0003-enrichment-pipeline.md` as the implementation lands. The implementation roadmap is `docs/implementation/admin/index.md`.
 
 ## Overview
 
@@ -28,7 +28,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 - **"Dashboard"** at `/`: counts of restaurants by publication state, restaurants missing each profile field, jobs queued, running and failed, editions awaiting verification, the last agent run with its link, recent activity.
 - **"Restaurants"** at `/restaurants`: list, search, filters by region, chain, publication state, award, missing profile field, pending draft and business status, and batch actions, with the detail at `/restaurants/[id]`. A restaurant with a draft waiting, or a published one whose business status turned closed, carries a badge in the list.
-- **"Awards"** at `/awards`: awards with their tiers and editions, with the edition detail at `/awards/[id]/editions/[editionId]`, where unresolved entries and unverified accolades wait for the operator.
+- **"Awards"** at `/awards`: awards with their tiers and editions, with the edition detail at `/awards/[id]/editions/[edition-id]`, where unresolved entries and unverified accolades wait for the operator.
 - **"Jobs"** at `/jobs`: the queue, with failed jobs flagged, and the job detail at `/jobs/[id]`.
 - **"Settings"** at `/settings`: configuration status of integrations and runner secrets.
 - There is no inbox: whatever waits for the operator is flagged on the list where it lives.
@@ -82,8 +82,8 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 - The poster section shows the brief, the artwork variants side by side, and the selected variant.
 - "Generate brief", or "Regenerate brief" with notes, writes a new brief from the canonical description. A new brief enqueues rendering automatically unless the operator chooses to review the brief first.
-- "Regenerate artwork" with notes renders a new round of variants from the current brief. "Upload artwork" accepts an image the operator produced elsewhere and treats it as a variant with upload origin.
-- Selecting a variant sets it on the draft and produces the derivatives the apps need. Posters carry no text: names, cuisine, district and award marks are rendered by the apps.
+- "Regenerate artwork" with notes renders a new round of variants from the current brief. "Upload artwork" accepts an image the operator produced elsewhere, lets the operator crop it to 16:9, and treats it as a variant with upload origin.
+- Selecting a variant sets it on the draft; the apps request the sizes they need through the image domain's transformations. Posters carry no text: names, cuisine, district and award marks are rendered by the apps.
 - Text in artwork is kept out by the brief and by the operator's choice of variant; there is no automated check.
 
 ### Enrich in batch
@@ -115,7 +115,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - The list shows kind, target, status, runner, attempts, and created and finished times, with filters by kind, status, runner and restaurant.
 - The job detail shows the payload, the rendered prompt, the lease, every attempt with its runner, session link and cost, the log of tool calls, the result and the error. "Retry" re-queues a failed job. "Cancel" stops a queued job and releases a running one at the end of its lease.
 - Leases in plain words: a runner holds a job for a limited time that each tool call extends. When the lease expires the job goes back to the queue, and a result that arrives afterwards is rejected. The server limits how many runners work at once, so an hourly run and a "Run now" cannot process the same job twice.
-- System tasks appear in the same list with their Trigger.dev status and a link to the run.
+- Rendering appears in the same list with its Trigger.dev status and a link to the run; identity resolution and refreshes from Places run inside the server and appear as jobs without a runner.
 
 ## Agent interface
 
@@ -144,17 +144,17 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 - Google Places for resolution, basics, the Maps link and periodic refresh.
 - The OpenAI image API for artwork, at the highest quality settings and native 16:9.
-- Cloudflare R2 for artwork and derivatives.
+- Cloudflare R2 for artwork, served through a Cloudflare domain whose image transformations deliver the sizes the apps need.
 - Trigger.dev for system tasks.
 - The Claude Code cloud scheduled task's fire endpoint for "Run now".
 - "Settings" shows whether each integration and each runner secret is configured. It never displays secret values; configuration lives in the environment.
 
 ## Milestones
 
-- **Factory, manual**: schema; awards, tiers and editions; restaurants with resolution; chains; accolades with references; every profile field manually editable; artwork upload; publishing with checklist.
-- **Agents, import**: tool endpoint and runner secrets; job queue with attempts and leases; edition import through the cloud task; manual mode; duplicates and merge.
+- **Factory, manual**: schema; awards, tiers and editions; restaurants with resolution; chains; accolades with references; every profile field manually editable; artwork upload; publishing with checklist; duplicates and merge.
+- **Agents, import**: tool endpoint and runner secrets; job queue with attempts and leases; edition import through the cloud task; manual mode.
 - **Agents, enrichment**: canonical description, profile, menu, summary, article, poster brief and links jobs; chaining; fill-empty; dashboard.
-- **Posters, automated**: Trigger.dev worker with OpenAI rendering and derivatives in R2; batch actions.
+- **Posters, automated**: Trigger.dev worker with OpenAI rendering into R2; batch actions.
 - **Hardening**: periodic refresh from Places, local worker, usage reporting.
 - **Link resolvers**: Dianping first, then OpenRice and Apple Maps, each as its own step.
 

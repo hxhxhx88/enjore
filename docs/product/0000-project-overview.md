@@ -125,18 +125,18 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 
 Work is tracked as jobs in one queue. Two classes exist:
 
-| Kind                            | Class       | Runner                               |
-| ------------------------------- | ----------- | ------------------------------------ |
-| Import an edition               | Agent job   | Claude on the owner's subscription   |
-| Canonical description           | Agent job   | Claude on the owner's subscription   |
-| Structured profile              | Agent job   | Claude on the owner's subscription   |
-| Menu                            | Agent job   | Claude on the owner's subscription   |
-| Summary and article, per locale | Agent job   | Claude on the owner's subscription   |
-| Poster brief                    | Agent job   | Claude on the owner's subscription   |
-| Outbound links                  | Agent job   | Claude on the owner's subscription   |
-| Resolve identity                | System task | Trigger.dev worker                   |
-| Render poster artwork           | System task | Trigger.dev worker, OpenAI image API |
-| Refresh basics from Places      | System task | Trigger.dev worker, periodic         |
+| Kind                            | Class       | Runner                                |
+| ------------------------------- | ----------- | ------------------------------------- |
+| Import an edition               | Agent job   | Claude on the owner's subscription    |
+| Canonical description           | Agent job   | Claude on the owner's subscription    |
+| Structured profile              | Agent job   | Claude on the owner's subscription    |
+| Menu                            | Agent job   | Claude on the owner's subscription    |
+| Summary and article, per locale | Agent job   | Claude on the owner's subscription    |
+| Poster brief                    | Agent job   | Claude on the owner's subscription    |
+| Outbound links                  | Agent job   | Claude on the owner's subscription    |
+| Resolve identity                | System task | Admin server, inline                  |
+| Render poster artwork           | System task | Trigger.dev worker, OpenAI image API  |
+| Refresh basics from Places      | System task | Admin server, inline; scheduled later |
 
 - Agent jobs need web research and judgment. System tasks are deterministic code.
 - The server owns the chain: when a canonical description lands it enqueues the derived artifacts, and when a poster brief lands it enqueues rendering.
@@ -170,7 +170,7 @@ Work is tracked as jobs in one queue. Two classes exist:
 - It is pure artwork and carries no text. An image model renders it from a poster brief. Names, cuisine, district and award marks are rendered by the apps next to the poster, so one poster serves every locale and nothing competes with the image.
 - The brief is written from the canonical description. It chooses the medium that fits the restaurant (editorial illustration, ink wash, oil painting, photoreal still life, collage, and so on), the motifs, the palette and the composition. A versioned house-style brief constrains every poster: palettes that sit well on dark backgrounds, no text, no logos, no recognizable people, no trademarks.
 - Several variants are rendered per brief. The operator picks one or asks for another round with notes. Text is kept out by the brief and by the operator's choice of variant; there is no automated check.
-- Artwork and the derivatives the apps need are stored in object storage and served through its public domain.
+- Artwork is stored in object storage and served through a Cloudflare domain whose image transformations deliver the sizes the apps need.
 - Articles may later embed additional illustrations produced by the same pipeline, never crawled photos.
 
 ### Summary and article
@@ -207,7 +207,7 @@ Work is tracked as jobs in one queue. Two classes exist:
 
 ### System tasks
 
-- Rendering, identity resolution and periodic refreshes from Places run on Trigger.dev, which gives retries, long runs and logs. They report results through the same server write path as agents, with their own token, so validation, provenance and chaining live in one place.
+- Rendering runs on Trigger.dev, which gives long runs and logs, and reports results through the same server write path as agents, with its own token, so validation, provenance and chaining live in one place. Identity resolution and refreshes from Places are short Places calls and run inside the server.
 
 ### Paid services
 

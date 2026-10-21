@@ -24,6 +24,8 @@ Use the `values` array to enumerate options, for example in a select component:
 </SelectContent>
 ```
 
+In `apps/admin-next`, the display labels of a vocabulary live in `src/lib/labels.ts` as a `Record<Value, string>`, such as `importStatusLabels`, so components show labels and store keys.
+
 Use the `valueSchema` Zod schema for validation:
 
 ```tsx

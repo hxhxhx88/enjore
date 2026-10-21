@@ -1,6 +1,6 @@
 # Database switch
 
-`connectDatabase()` in each app's `src/lib/db.ts` is the only way application code reaches the database. It returns the Prisma client for `DATABASE_URL` by default, and it is the single place where the database can be selected per request.
+`connectDatabase()` in the `src/lib/db.ts` of `apps/app-next` and `apps/admin-next` is the only way the web apps reach the database. It returns the Prisma client for `DATABASE_URL` by default, and it is the single place where the database can be selected per request. `apps/cli-bun` serves no requests and calls `newDatabase` with its own `DATABASE_URL`.
 
 ## Why it exists
 

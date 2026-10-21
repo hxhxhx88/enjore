@@ -14,8 +14,9 @@ The project is organized as a **monorepo**. Below is the top-level folder struct
 │   │                      # for the project's data structures.
 │   ├── email/             # Email templates and delivery.
 │   ├── i18n/              # Centralized i18n configuration, utilities, and translations.
-│   ├── lib/               # Miscellaneous shared utilities.
-│   └── ui-web/            # Common web UI primitives and components.
+│   ├── lib/               # Shared utilities, and the Zod schemas of external objects and
+│   │                      # domain vocabularies (`src/schemas/`).
+│   └── ui-web/            # Common web UI primitives and components, including the marks registry.
 ├── configs/               # Shared configuration files.
 │   ├── ts/                # TypeScript-related configuration.
 │   └── ui/                # UI-related configuration.
@@ -24,7 +25,7 @@ The project is organized as a **monorepo**. Below is the top-level folder struct
 ├── taskfile.yaml          # Entry point for all tasks.
 ├── compose.yaml           # Local PostgreSQL for development (`task db:up`).
 ├── pnpm-workspace.yaml    # Workspaces, dependency version catalog, supply-chain policies.
-├── vitest.config.ts       # Registers the packages that have unit tests.
+├── vitest.config.ts       # Registers the workspaces that have unit tests, apps included.
 ├── knip.json              # Unused files, exports and dependencies check.
 ├── renovate.json          # Dependency update rules.
 └── ...                    # Other root-level configuration files.

@@ -20,3 +20,4 @@
 ## Environment variables
 
 - Use `.env.example` as the template for `.env.local`. Keep comments on their own lines; a trailing comment after an empty value is read as the value.
+- Every variable the admin lists in `apps/admin-next/src/lib/env.ts` is mandatory, `RUNNER_SECRET_CLAUDE` included: the admin does not start while one is missing. A new integration adds its variables there, to `.env.example` and `turbo.json`, and a row to `readSettings()` in `src/lib/settings.ts`; see `docs/development/0000-overview/config-env.md`.

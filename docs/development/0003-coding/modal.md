@@ -19,7 +19,7 @@ Usually modals are used in a complex component:
 my-component/
 ├── modal-*.tsx           # a single modal
 ├── modal-controller.tsx  # a centralized place to control the display of modals
-├── context.ts            # in the store there will be a field for the presenting modal
+├── context.tsx           # in the store there will be a field for the presenting modal
 └── ...                   # other files of the component
 ```
 
@@ -38,8 +38,8 @@ See `examples/web/src/modal` for detailed examples and explanations.
     setModalData: (modalData: ModalData | undefined) => void
   }
   ```
-- Implement `modal-user-*.tsx` for each modal. The scaffold can usually by copied from an example.
-- Implement the `modal-controller.tsx`, and add mount it to `index.tsx`.
+- Implement `modal-<entity>-<action>.tsx` for each modal, such as `modal-tier-edit.tsx`. The scaffold can usually be copied from an example.
+- Implement `modal-controller.tsx` and mount it after the children of the component's provider: `index.tsx` in the examples, `provider.tsx` in the admin's `detail-<entity>/`.
 
 ## Base UI notes
 

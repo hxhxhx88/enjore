@@ -20,17 +20,17 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - **Business status**: open, temporarily closed, permanently closed. It comes from Google Places, is refreshed periodically, and can be overridden by the operator.
 - **Accolade**: unverified until the operator verifies it. Agents can only add unverified accolades.
 - **Enriched profile**: the published profile, which requires a summary and a selected poster, and at most one draft with every field optional. The outbound links are a field of the profile like the others. Agents write only the draft; the operator edits either. Publish copies the draft onto the published profile and deletes the draft.
-- **Origin**: where a value came from. Places facts record Google Places, agent or manual. Anything a runner writes links to the job attempt that wrote it, so its origin is read from there: no attempt is the operator, an attempt by the manual runner is manual mode, any other runner is an agent or a system task.
+- **Origin**: where a value came from. Places facts record Google Places, agent or manual. Artwork, accolades and import entries a runner writes link to the job attempt that wrote them, so their origin is read from there: no attempt is the operator, an attempt by the manual runner is manual mode, any other runner is an agent or a system task. A draft field's origin is read from the newest logged tool call that wrote it.
 - **Job**: queued, running, succeeded, failed or cancelled, read from its lease, finish and cancel times rather than stored. Each run of a job is an attempt with a runner, a log of tool calls and a cost.
 - **Edition import status**: not imported, importing, imported, verified.
 
 ## Pages
 
-- **"Dashboard"** at `/`: counts of restaurants by publication state, restaurants missing each profile field, jobs queued, running and failed, editions awaiting verification, the last agent run with its link, recent activity.
+- **"Dashboard"** at `/`: the number of awards and how many are active; editions awaiting verification, with the oldest imports linked; counts of restaurants by publication state; restaurants missing each profile field; jobs queued, running and failed; the last agent run with its link; recent activity. A card appears once the data behind it exists, so the first dashboard shows only the awards and the editions awaiting verification.
 - **"Restaurants"** at `/restaurants`: list, search, filters by region, chain, publication state, award, missing profile field, pending draft and business status, and batch actions, with the detail at `/restaurants/[id]`. A restaurant with a draft waiting, or a published one whose business status turned closed, carries a badge in the list.
-- **"Awards"** at `/awards`: awards with their tiers and editions, with the edition detail at `/awards/[id]/editions/[edition-id]`, where unresolved entries and unverified accolades wait for the operator.
+- **"Awards"** at `/awards`: the awards, searchable by name, short name or slug and filtered by active state, with their facets and tier and edition counts. The award detail at `/awards/[id]` shows its fields, its tiers with their marks and its editions with their import status. The edition detail at `/awards/[id]/editions/[edition-id]` shows the edition and is where unresolved entries and unverified accolades wait for the operator.
 - **"Jobs"** at `/jobs`: the queue, with failed jobs flagged, and the job detail at `/jobs/[id]`.
-- **"Settings"** at `/settings`: configuration status of integrations and runner secrets.
+- **"Settings"** at `/settings`: the integrations and runner secrets the deployment carries, each with its environment variables and whether they are set.
 - There is no inbox: whatever waits for the operator is flagged on the list where it lives.
 - The template's "Users" pages are removed.
 
@@ -38,17 +38,17 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 ### Manage awards
 
-- Create and edit an award: name, short name, slug, website, which facets its accolades carry (tier, rank, score, label), the maximum of its score when it has one, and whether it is active.
-- Tiers: name, level for ordering, glyph key and glyph count, with a live preview of the mark. A glyph key the registry does not know previews as the generic mark; the award is still usable.
-- Editions: label, year, region, source URL, expected count, notes. Creating an edition does not import anything.
-- An award with accolades cannot be deleted; it can be deactivated.
+- Create and edit an award: name, in the source's own language, and the language of that name; short name; slug; website; which facets its accolades carry (tier, rank, score, label), with the maximum of its score when it carries one; and whether it is active. A new award's slug is filled from its name until the operator types one; a name without Latin letters needs the slug typed.
+- Tiers: name, level for ordering (1 is the highest), glyph key and glyph count (1 to 10), with a live preview of the mark. The glyph key field suggests the keys the registry draws and accepts any other; a key the registry does not know previews as the generic mark, and the award is still usable. A tier held by accolades cannot be deleted.
+- Editions: label, year, region, source URL, expected count, notes. The region is the scope the list covers, such as Hong Kong Macau or Asia, written freely; it is not a restaurant's region code. Creating an edition does not import anything.
+- An award that accolades or source references point at cannot be deleted; it can be deactivated, which keeps it with its accolades and stops offering it when an accolade is added. Deleting an award nothing points at removes its tiers and editions with it.
 
 ### Import an edition
 
 - "Import with agent" enqueues an edition import job and sets the edition to importing. The agent finds the official list and submits every entry it contains, whatever its region, with every official name it finds and which one it proposes as canonical from the nature of the restaurant, the address, the facets it holds and the reference URL. The other names are stored as translations of the name. It reports the total it found. An import is complete or it is not done: once an edition is imported, nobody returns to it when another city's turn comes.
 - "Copy prompt" shows the same instructions for pasting into Claude or ChatGPT, together with the result format. "Paste a list" accepts that result, or any list the operator assembled, and runs it through the same resolver.
 - Each submitted entry is resolved to a restaurant (see "Resolve a restaurant"). A resolved entry creates an unverified accolade, and a new restaurant tagged with its region when none existed. An unresolved entry waits on the edition page with the candidates the resolver found.
-- The edition page shows the expected count, the submitted count, the resolved and unresolved counts, and the accolade table: restaurant, facets, reference, origin, verified.
+- The edition page shows the edition's fields and import status, the expected count, the count the import reported finding, the submitted count, the resolved and unresolved counts, and the accolade table: restaurant, facets, reference, origin, verified.
 - "Mark verified" on the edition requires no unresolved entries and verifies every accolade of the edition in one step. Accolades can also be verified one by one.
 
 ### Resolve a restaurant
@@ -105,10 +105,10 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 ### Run agents
 
-- "Run now" on the jobs page fires the cloud scheduled task through its API trigger and shows the link to the session so the operator can watch it. The page explains that the schedule also runs hourly and that fires per hour are limited.
+- "Run now" on the jobs page fires the cloud scheduled task through its API trigger and shows the link to the session so the operator can watch it. The page explains that the schedule also runs hourly and that each task allows 30 fires per hour.
 - A local worker on the operator's machine is an alternative runner using the same tools. The jobs page shows which runner holds each job.
 - Manual mode is available on any queued agent job: "Copy prompt" copies the rendered instructions and the expected result format, and "Paste result" validates the result and writes it through the same path the tools use, with manual origin.
-- Each runner authenticates with its own secret from the environment, so rotating one is a deployment. Every write a runner makes links to its attempt, which records the runner.
+- Each runner that calls the endpoint, Claude, the local worker and Trigger.dev, authenticates with its own secret from the environment; the manual runner has none, because Basic Auth already covers the operator. Rotating a secret is a deployment, and for Claude also re-adding the claude.ai connector with the new header. Every write a runner makes links to its attempt, which records the runner.
 
 ### Jobs page
 
@@ -119,7 +119,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 ## Agent interface
 
-- One endpoint on the admin host, outside Basic Auth, authenticated by a bearer secret per runner. It speaks the Model Context Protocol (MCP), so Claude Code, claude.ai and ChatGPT can use it.
+- One endpoint, `/api/mcp` on the admin host, outside Basic Auth and authenticated by a bearer secret per runner; a request without a known secret is refused. It speaks the Model Context Protocol (MCP). Claude reaches it through the claude.ai custom connector, from chats, scheduled tasks and Claude Code sessions alike; the local worker and Trigger.dev use their own secrets. Any other MCP client, ChatGPT included, would need a runner identity and secret of its own, and until then takes part only through manual mode.
 - Tool groups:
   - **Jobs**: claim the next job, extend the lease, complete, fail. Claiming returns the job and its rendered instructions, and those instructions are the only ones a runner follows.
   - **Restaurants**: search by name, submit an import entry for resolution, read the context the job kind needs.
@@ -146,21 +146,22 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - The OpenAI image API for artwork, at the highest quality settings and native 16:9.
 - Cloudflare R2 for artwork, served through a Cloudflare domain whose image transformations deliver the sizes the apps need.
 - Trigger.dev for system tasks.
+- The claude.ai custom connector that carries the tool endpoint's URL and bearer secret, which is how Claude reaches the endpoint from chats, scheduled tasks and Claude Code sessions.
 - The Claude Code cloud scheduled task's fire endpoint for "Run now".
-- "Settings" shows whether each integration and each runner secret is configured. It never displays secret values; configuration lives in the environment.
+- "Settings" lists each integration and runner secret with the environment variables behind it and whether they are set: at first the database, Basic Auth and the Claude connector secret, with a row added by each integration as it lands. Every variable listed is required at boot, so the page is an inventory of what the deployment carries rather than a report of gaps. It never displays secret values; configuration lives in the environment.
 
 ## Milestones
 
-- **Factory, manual**: schema; awards, tiers and editions; restaurants with resolution; chains; accolades with references; every profile field manually editable; artwork upload; publishing with checklist; duplicates and merge.
+- **Factory, manual**: schema; awards, tiers and editions, with the launch awards seeded; the "Dashboard" and "Settings" skeletons; restaurants with resolution; chains; accolades with references; every profile field manually editable; artwork upload; publishing with checklist; duplicates and merge.
 - **Agents, import**: tool endpoint and runner secrets; job queue with attempts and leases; edition import through the cloud task; manual mode.
-- **Agents, enrichment**: canonical description, profile, menu, summary, article, poster brief and links jobs; chaining; fill-empty; dashboard.
+- **Agents, enrichment**: canonical description, profile, menu, summary, article, poster brief and links jobs; chaining; fill-empty; the complete dashboard.
 - **Posters, automated**: Trigger.dev worker with OpenAI rendering into R2; batch actions.
 - **Hardening**: periodic refresh from Places, local worker, usage reporting.
 - **Link resolvers**: Dianping first, then OpenRice and Apple Maps, each as its own step.
 
 ## Acceptance scenarios
 
-- Create the MICHELIN Guide award with its tiers, add the Hong Kong Macau 2026 edition and click "Import with agent". Within the next run every entry, Macau included, exists as a restaurant with an unverified accolade and a reference, the counts match the expected count, and "Mark verified" completes the import. Filtering the restaurant list to Hong Kong shows the ones to enrich first; Macau waits without a second import.
+- Open the seeded MICHELIN Guide award, add the Hong Kong Macau 2026 edition and click "Import with agent". Within the next run every entry, Macau included, exists as a restaurant with an unverified accolade and a reference, the counts match the expected count, and "Mark verified" completes the import. Filtering the restaurant list to Hong Kong shows the ones to enrich first; Macau waits without a second import.
 - Select ten unenriched restaurants, click "Enrich" and leave. In the morning each has a draft with a canonical description, a structured profile, a menu where the restaurant publishes one, a summary, an article, a brief and poster variants, and the jobs page lists what failed.
 - A poster feels wrong: write "warmer light, show the counter, less crowded" and click "Regenerate artwork". A new round of variants appears; select the best one.
 - Add the award "We're Smart World" with a tier whose glyph key is unknown. It renders as the generic mark until a drawing is added to the registry; no code change is needed to use the award.

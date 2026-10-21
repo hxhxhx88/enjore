@@ -50,10 +50,10 @@ export async function editUser(input: Input): Promise<Output> {
     return { type: 'ok' }
   }
   catch (e) {
-    // If the database error is due to an email conflict, return a clear message to the user.
-    const emailExists = isEmailExistsError(e)
-    if (emailExists) {
-      return { type: 'bad', message: 'Email already used' }
+    // A unique or `Restrict` violation the user can correct becomes a message; anything else is unexpected.
+    const error = parseDatabaseError(e)
+    if (error) {
+      return { type: 'bad', message: error.message }
     }
 
     // Throw the error if it is not an expected validation error.
@@ -61,3 +61,5 @@ export async function editUser(input: Input): Promise<Output> {
   }
 }
 ```
+
+In `apps/admin-next`, `parseDatabaseError` from `src/lib/db-error.ts` turns unique and `Restrict` foreign-key violations into messages, one written per known key; actions catch nothing else. `src/components/detail-award/action-award-update.ts` is a real instance.

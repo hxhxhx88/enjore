@@ -22,3 +22,5 @@ To add new environment variables:
 - Add them to the `globalEnv` field in `turbo.json` for development visibility.
 - Set their values in `.env.local`.
 - Register them in the relevant `lib/env.ts` file.
+- In `apps/admin-next`, add a row to `readSettings()` in `src/lib/settings.ts`, so the Settings page lists the integration and whether its variables are set.
+- `RUNNER_SECRET_CLAUDE` is mandatory: the admin does not start without it, so set any value in `.env.local`, for example one from `openssl rand -base64 32`.

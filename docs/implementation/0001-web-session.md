@@ -14,7 +14,7 @@ How `apps/app-next` signs users in and keeps them signed in. The product behavio
 
 - `actionVerifyCode` upserts the user by email, creates a `Session` row and sets the `APP_SESSION` cookie. The cookie holds a random 32-byte token; the row id is the token's SHA-256, so a database leak does not expose usable cookies.
 - The cookie is `httpOnly`, `sameSite=lax`, `path=/`, `secure` outside development, and expires together with the row after `SESSION_TTL_DAYS` (default 30).
-- `getSession()` (`src/lib/session.ts`) reads the cookie, looks up the unexpired row and returns the user. It is wrapped in React `cache`, so a layout, a page and its metadata share one lookup per request.
+- `getSession()` (`src/lib/session.ts`) reads the cookie, looks up the unexpired row and returns the session id with its user, or `undefined`. It is wrapped in React `cache`, so a layout, a page and its metadata share one lookup per request.
 - Pages that need a user call `getSession()` and `redirect()` when it returns nothing. Access is enforced by the server-rendered pages, not by the proxy.
 - `actionSignOut` deletes the row and clears the cookie, so a copied cookie stops working immediately.
 - Cookies are only written in server actions; server components only read them. After a successful action, the client navigates with `router.replace` instead of calling `redirect()` inside the action.

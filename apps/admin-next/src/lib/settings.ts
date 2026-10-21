@@ -23,9 +23,9 @@ export function readSettings(): SettingRow[] {
       configured: isSet(env.ADMIN_BASIC_AUTH_USERNAME) && isSet(env.ADMIN_BASIC_AUTH_PASSWORD),
     },
     {
-      name: 'Cloud task runner secret',
-      variables: ['RUNNER_SECRET_CLOUD_TASK'],
-      configured: isSet(env.RUNNER_SECRET_CLOUD_TASK),
+      name: 'Claude connector secret',
+      variables: ['RUNNER_SECRET_CLAUDE'],
+      configured: isSet(env.RUNNER_SECRET_CLAUDE),
     },
   ]
 }

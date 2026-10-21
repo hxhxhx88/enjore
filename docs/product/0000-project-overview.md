@@ -41,7 +41,7 @@ The admin web is the factory. The public apps are the storefront.
 - **Membership**: being on the list is the distinction, such as the World's 50 Best Discovery.
 - **Named**: a one-off prize with a name, such as "Highest new entry".
 
-A source can combine kinds. La Liste publishes a rank and a score; the 50 Best lists publish a rank and sometimes a named prize. Regional lists such as Asia's 50 Best Restaurants are separate awards of the same kind as their global parent.
+A source can combine kinds. La Liste publishes a rank and a score; the 50 Best lists publish a rank and sometimes a named prize. A regional list published under a name of its own, such as Asia's 50 Best Restaurants, is a separate award of the same kind as its global parent; a list a guide publishes per region, such as the MICHELIN Guide Hong Kong Macau, is an edition of the one award, and the edition's region says which.
 
 | Source                             | Kind of distinction                                                          | Hong Kong relevance in v1                        |
 | ---------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------ |
@@ -68,7 +68,7 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 | Chef's Table                       | Membership                                                                   | Later                                            |
 | Google                             | Crowd rating                                                                 | Excluded, Google appears only as the Maps link   |
 
-"Seeded" means the award and its tiers are created as data when the admin launches. Nothing about a source is hard-coded except the drawings used to render its distinctions.
+"Seeded" means the award, its tiers and the translations of their names are created as data by `task cli -- seed-awards` before the admin is first used. The command matches awards by slug and tiers by award and name, so it can run again: a re-run restores every seeded field except whether an award is active and leaves tiers the operator added alone. Editions are never seeded; the lists this column names are added by the operator. Nothing about a source is hard-coded except the drawings used to render its distinctions.
 
 ## Domain model
 
@@ -89,16 +89,16 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 
 ### Award, tier, edition, accolade
 
-- **Award**: a source, such as the MICHELIN Guide. It declares which facets its accolades carry (tier, rank, score, label) and the scale of its score when it has one.
-- **Tier**: a distinction the award defines once and hands out year after year, such as three stars or Bib Gourmand. Tiers belong to the award, not to a list, so "all restaurants that ever held three stars" is a plain query and a new year needs no new tiers. A tier has a level for ordering and a mark: a glyph key and a count, such as star × 3 or diamond × 2.
-- **Edition**: one published list of an award, such as the MICHELIN Guide Hong Kong Macau 2026 or Asia's 50 Best Restaurants 2025, with its region, source URL, an expected count and an import status.
-- **Accolade**: the link between a restaurant and an edition. It carries the facets the award declares, in any combination the award allows and nothing else: a tier, a rank, a score, a label. A reference URL is mandatory. It records its origin, manual or agent, and whether the operator verified it. A restaurant holds any number of accolades.
+- **Award**: a source, such as the MICHELIN Guide. Its name is canonical in the source's own language, which it records, and its other names are translations. It declares which facets its accolades carry (tier, rank, score, label) and the scale of its score when it has one; an award that declares none hands out plain memberships. An inactive award keeps its accolades and is no longer offered when an accolade is added.
+- **Tier**: a distinction the award defines once and hands out year after year, such as three stars or Bib Gourmand. Tiers belong to the award, not to a list, so "all restaurants that ever held three stars" is a plain query and a new year needs no new tiers. A tier has a level for ordering, 1 being the highest, and a mark: a glyph key and a count from 1 to 10, such as star × 3 or diamond × 2.
+- **Edition**: one published list of an award, such as the MICHELIN Guide Hong Kong Macau 2026 or Asia's 50 Best Restaurants 2025, with its label, year, region (the scope the list covers, written freely, not a restaurant's region code), source URL, an expected count, the count the import reported finding, the operator's notes, and an import status derived from its import and verification times.
+- **Accolade**: the link between a restaurant and an edition. It carries the facets the award declares, in any combination the award allows and nothing else: a tier, a rank, a score, a label. A reference URL is mandatory. Its origin follows from the job attempt that wrote it: none for the operator, the manual runner for manual mode, any other runner for an agent. It records whether the operator verified it. A restaurant holds any number of accolades.
 - Invariants: a tier on an accolade belongs to the edition's award; an accolade carries the facets its award declares, or is a plain membership when the award declares none.
 
 ### Marks
 
-- Distinctions render in a way that feels native to the source without hard-coding sources. The tier's glyph key selects a drawing from a registry in code, repeated by its count; ranked and scored awards render as marks like "#7" and "97.5/100". An unknown glyph key falls back to a generic mark, so a new award works the moment it is entered, and a new drawing is a small, isolated change.
-- The drawings are our own and evoke the distinction: a star, a diamond, a toque, a fork, a radish, a pin, a hat. We never reproduce a guide's logo or trademarked symbol, and the award name and year always appear next to the mark.
+- Distinctions render in a way that feels native to the source without hard-coding sources. The tier's glyph key selects a drawing from a registry in code, repeated by its count; ranked and scored awards render as marks like "#7" and "97.5/100". An unknown glyph key falls back to a generic mark, so a new award works the moment it is entered, and a new drawing is a small, isolated change. A plain membership, with no facet at all, shows the generic mark.
+- The drawings evoke the distinction. The registry draws a star, a diamond, a toque, a fork, a radish, a pin and a leaf, plus the generic mark; they are Lucide icons for now, to be replaced by drawings of our own without touching their callers. A seeded key without a drawing, such as `bib` and `plate` on the MICHELIN Guide's Bib Gourmand and Selected, shows the generic mark until its drawing is added. We never reproduce a guide's logo or trademarked symbol, and the award name and year always appear next to the mark.
 
 ### Enriched profile
 
@@ -106,7 +106,7 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 - The profile exists in two forms with the same fields. The published profile is what the public apps read; it requires a summary and a selected poster, and the database enforces that. The draft holds work in progress, with every field optional; a restaurant has at most one, started as a copy of the published profile or empty.
 - The pipeline writes only the draft. The operator edits either the published profile directly, with immediate effect, or the draft. Publishing copies the draft onto the published profile and deletes the draft.
 - A regeneration fills empty fields; replacing everything is an explicit choice. Regeneration sees the current draft and accepts notes from the operator.
-- There is no version history. Who wrote what is in the job log: a row written by a runner links to the job attempt that produced it.
+- There is no version history. Who wrote what is in the job log: artwork, accolades and import entries link to the job attempt that produced them, and every draft write is a logged tool call of an attempt.
 
 ### Identity
 
@@ -200,10 +200,10 @@ Work is tracked as jobs in one queue. Two classes exist:
 
 ### Agent jobs on the owner's subscription
 
-- The primary runner is a Claude Code cloud scheduled task, available on the owner's Claude Max plan. It runs on Anthropic's infrastructure with the owner's machine off, draws on subscription usage, and starts two ways: an hourly schedule, and an API trigger that the admin's "Run now" button calls.
-- The task clones this repository, which commits the connection to our tool endpoint, and runs with network access for research and a network secret that attaches our token to requests to our host. Its saved prompt is generic: claim jobs, follow the returned instructions, submit through the tools, repeat until the queue is empty or a per-run limit is reached.
-- Alternatives using the same tools: a local worker that loops headless Claude Code on the owner's Mac, and a manual mode in the admin where the operator copies the prompt into Claude or ChatGPT and pastes the result back.
-- Platform limits that shape the design: the schedule runs at most hourly, the API trigger allows a bounded number of fires per hour, and usage limits bound how much an overnight batch can do. The queue is therefore priority-ordered, canonical descriptions for every restaurant before derived artifacts, so partial progress is useful.
+- The primary runner is Claude on the owner's Claude Max plan, reaching the tool endpoint through a custom connector on the owner's claude.ai account. The connector carries the endpoint's URL and its bearer secret as a fixed request header, so every Claude surface can drain the queue: a chat, a scheduled task that runs in chat, a Claude Code cloud session or the terminal. Unattended runs are Claude Code scheduled tasks without a repository; they run on Anthropic's infrastructure with the owner's machine off, draw on subscription usage, and start two ways: an hourly schedule, and an API trigger that the admin's "Run now" button calls.
+- Nothing is cloned and no environment variable is set for a run: the connector is the whole connection. The task's saved prompt is generic: claim jobs, follow the returned instructions, submit through the tools, repeat until the queue is empty or a per-run limit is reached.
+- Alternatives: a local worker that loops headless Claude Code on the owner's Mac through the same tools, and a manual mode in the admin where the operator copies the prompt into Claude or ChatGPT and pastes the result back, which the admin writes through the same path the tools use.
+- Platform limits that shape the design: the schedule runs at most hourly, the API trigger allows 30 fires per hour per task, and usage limits bound how much an overnight batch can do. The queue is therefore priority-ordered, canonical descriptions for every restaurant before derived artifacts, so partial progress is useful.
 
 ### System tasks
 

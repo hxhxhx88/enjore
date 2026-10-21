@@ -400,13 +400,12 @@ model ImportEntry {
 }
 
 // One unit of work in the single queue. Exactly one target is set and the kind says which; if several are set, the
-// first in definition order counts, and none set is a runtime error. Status is derived
-// (packages/lib/src/schemas/job-status.ts): cancelled when `cancelledAt` is set, else failed when finished with an
-// error, else succeeded when finished, else running while `leaseExpiresAt` is in the future, else queued. The lease is
-// the claim guard: claiming is one atomic update of a job that is neither finished nor cancelled and whose lease is
-// absent or expired, and a result from any attempt but the newest, or after its lease, is rejected. Retry clears the
-// finish fields and the lease. `priority` orders the queue (lower first) so canonical descriptions precede derived
-// work.
+// first in definition order counts, and none set is a runtime error. Status is derived, never stored: cancelled when
+// `cancelledAt` is set, else failed when finished with an error, else succeeded when finished, else running while
+// `leaseExpiresAt` is in the future, else queued. The lease is the claim guard: claiming is one atomic update of a job
+// that is neither finished nor cancelled and whose lease is absent or expired, and a result from any attempt but the
+// newest, or after its lease, is rejected. Retry clears the finish fields and the lease. `priority` orders the queue
+// (lower first) so canonical descriptions precede derived work.
 model Job {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz

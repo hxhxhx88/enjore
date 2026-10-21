@@ -1,6 +1,6 @@
 generator client {
-  provider        = "prisma-client"
-  output          = "../generated/prisma"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -13,7 +13,7 @@ datasource db {
 model Verification {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @map(name: "updated_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
 
   codeHash    String   @map(name: "code_hash")
   payloadJson String   @map(name: "payload") // packages/lib/src/schemas/verification-payload.ts
@@ -26,7 +26,7 @@ model Verification {
 model User {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @map(name: "updated_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
 
   email String @unique @map(name: "email")
 
@@ -40,7 +40,7 @@ model User {
 model Session {
   id        String   @id
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @map(name: "updated_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
 
   userId String @map(name: "user_id")
 
@@ -50,4 +50,503 @@ model Session {
 
   @@index([userId])
   @@map(name: "sessions")
+}
+
+// One translated value of one field of one record, overlaying the canonical value when the apps render `locale`.
+// `table` is the record's `@@map` name and `field` its Prisma field name, so a key survives model renames; which
+// tables and fields are translatable is listed in packages/lib/src/schemas/translation.ts. The base record keeps the
+// canonical value in its native language, so no model ever gets per-locale columns. Rows of a profile draft are
+// re-keyed to the published profile when the draft is published.
+model Translation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  locale   String @map(name: "locale") // packages/lib/src/schemas/locale-tag.ts
+  table    String @map(name: "table") // packages/lib/src/schemas/translation.ts
+  recordId String @map(name: "record_id")
+  field    String @map(name: "field")
+  value    String @map(name: "value")
+
+  @@unique([locale, table, recordId, field])
+  @@index([table, recordId])
+  @@map(name: "translations")
+}
+
+// A brand whose branches are the restaurants pointing at it. Branches are distinct venues and are never merged.
+model Chain {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  name       String @map(name: "name") // canonical, in the brand's native language; other names are Translation rows
+  nameLocale String @map(name: "name_locale") // packages/lib/src/schemas/locale-tag.ts
+  slug       String @unique @map(name: "slug")
+
+  restaurants Restaurant[]
+
+  @@map(name: "chains")
+}
+
+// One venue at one address. The canonical name is in the venue's native language (`nameLocale`); the other official
+// names are Translation rows of `name`. Each of the seven Places facts carries an origin
+// (packages/lib/src/schemas/fact-origin.ts): "places" facts are refreshed periodically, "agent" and "manual" facts are
+// never refreshed, and a null value with a manual origin is a fact the operator cleared. Publication state is derived:
+// archived when an archive row exists, else withdrawn when `withdrawnAt` is set, else published when a profile row
+// exists, else unpublished. Readiness to publish is computed from the checklist, never stored.
+model Restaurant {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  chainId String? @map(name: "chain_id")
+
+  name                          String    @map(name: "name")
+  nameLocale                    String    @map(name: "name_locale") // packages/lib/src/schemas/locale-tag.ts
+  slug                          String    @unique @map(name: "slug")
+  region                        String    @map(name: "region") // packages/lib/src/schemas/region.ts
+  placeId                       String?   @unique @map(name: "place_id") // Google place id, set once resolved
+  placesRefreshedAt             DateTime? @map(name: "places_refreshed_at") @db.Timestamptz
+  address                       String?   @map(name: "address")
+  addressOrigin                 String    @default("places") @map(name: "address_origin")
+  district                      String?   @map(name: "district")
+  districtOrigin                String    @default("places") @map(name: "district_origin")
+  latitude                      Float?    @map(name: "latitude") // WGS-84; set together with longitude
+  longitude                     Float?    @map(name: "longitude")
+  coordinatesOrigin             String    @default("places") @map(name: "coordinates_origin")
+  phone                         String?   @map(name: "phone")
+  phoneOrigin                   String    @default("places") @map(name: "phone_origin")
+  website                       String?   @map(name: "website")
+  websiteOrigin                 String    @default("places") @map(name: "website_origin")
+  openingHours                  Json?     @map(name: "opening_hours") // packages/lib/src/schemas/opening-hours.ts
+  openingHoursOrigin            String    @default("places") @map(name: "opening_hours_origin")
+  businessStatus                String?   @map(name: "business_status") // packages/lib/src/schemas/business-status.ts
+  businessStatusOrigin          String    @default("places") @map(name: "business_status_origin")
+  structuredProfileLockedFields String[]  @default([]) @map(name: "structured_profile_locked_fields") // packages/lib/src/schemas/structured-profile.ts; locks outlive drafts
+  withdrawnAt                   DateTime? @map(name: "withdrawn_at") @db.Timestamptz // hidden from the public while set; the profile stays
+
+  chain Chain? @relation(fields: [chainId], references: [id], onDelete: SetNull)
+
+  profile          RestaurantProfile?
+  draft            RestaurantProfileDraft?
+  archive          RestaurantArchive?      @relation("ArchiveRestaurant")
+  mergedArchives   RestaurantArchive[]     @relation("ArchiveSurvivor")
+  posterArtworks   PosterArtwork[]
+  links            RestaurantLink[]
+  sourceReferences SourceReference[]
+  accolades        Accolade[]
+  importEntries    ImportEntry[]
+  jobs             Job[]
+
+  @@index([chainId])
+  @@index([region])
+  @@map(name: "restaurants")
+}
+
+// The published enriched profile, read live by the public apps. The NOT NULL columns are the publish gate: a draft
+// can only be published once it has a summary and a selected poster. Text columns are written in `locale`, the
+// restaurant's native language; other locales are Translation rows. Publishing copies the draft onto this row and
+// deletes the draft, in one transaction. The poster relation also carries `restaurantId`, so a profile can only
+// select artwork of its own restaurant.
+model RestaurantProfile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  restaurantId    String @unique @map(name: "restaurant_id")
+  posterArtworkId String @map(name: "poster_artwork_id")
+
+  locale               String  @map(name: "locale") // packages/lib/src/schemas/locale-tag.ts; the language of the text columns
+  summary              String  @map(name: "summary") // a few sentences that fit a card
+  article              String? @map(name: "article") // markdown
+  canonicalDescription String? @map(name: "canonical_description") // internal research in English, markdown with a sources section; never shown to users
+  posterBrief          String? @map(name: "poster_brief") // the text the poster artwork is rendered from
+  structuredProfile    Json?   @map(name: "structured_profile") // packages/lib/src/schemas/structured-profile.ts
+  menu                 Json?   @map(name: "menu") // packages/lib/src/schemas/menu.ts
+
+  restaurant    Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  posterArtwork PosterArtwork @relation(fields: [restaurantId, posterArtworkId], references: [restaurantId, id], onDelete: Restrict)
+
+  @@unique([restaurantId, posterArtworkId])
+  @@map(name: "restaurant_profiles")
+}
+
+// The working copy of a restaurant's enriched profile and the only table the pipeline writes. Same columns as
+// RestaurantProfile with every field optional, so agents can fill it one step at a time. A draft starts as a copy of
+// the published profile, or empty when there is none. The inbox lists drafts whose `updatedAt` is newer than
+// `reviewedAt`.
+model RestaurantProfileDraft {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  restaurantId    String  @unique @map(name: "restaurant_id")
+  posterArtworkId String? @map(name: "poster_artwork_id")
+
+  locale               String    @map(name: "locale") // packages/lib/src/schemas/locale-tag.ts; the language of the text columns
+  summary              String?   @map(name: "summary")
+  article              String?   @map(name: "article")
+  canonicalDescription String?   @map(name: "canonical_description")
+  posterBrief          String?   @map(name: "poster_brief")
+  structuredProfile    Json?     @map(name: "structured_profile") // packages/lib/src/schemas/structured-profile.ts
+  menu                 Json?     @map(name: "menu") // packages/lib/src/schemas/menu.ts
+  reviewedAt           DateTime? @map(name: "reviewed_at") @db.Timestamptz
+
+  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  posterArtwork PosterArtwork? @relation(fields: [restaurantId, posterArtworkId], references: [restaurantId, id], onDelete: Restrict)
+
+  @@unique([restaurantId, posterArtworkId])
+  @@map(name: "restaurant_profile_drafts")
+}
+
+// One poster variant, rendered by a job or uploaded by the operator (no attempt). `brief` is the text the render
+// used, so a variant explains itself after the draft's brief changes. The automated text check sets
+// `rejectionReason`; a rejected variant stays for the record and cannot be selected (runtime check).
+// `@@unique([restaurantId, id])` is what lets a profile reference artwork through its restaurant.
+model PosterArtwork {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  restaurantId String  @map(name: "restaurant_id")
+  attemptId    String? @map(name: "attempt_id")
+
+  url             String  @unique @map(name: "url") // public object storage URL of the original
+  width           Int     @map(name: "width")
+  height          Int     @map(name: "height")
+  brief           String? @map(name: "brief")
+  rejectionReason String? @map(name: "rejection_reason")
+
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  attempt    JobAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+
+  profile RestaurantProfile?
+  draft   RestaurantProfileDraft?
+
+  @@unique([restaurantId, id])
+  @@index([attemptId])
+  @@map(name: "poster_artworks")
+}
+
+// Present when a restaurant is archived: hidden from the public and from working lists, with a reason. A merged
+// duplicate is archived with `survivorId` pointing at the record that kept its accolades, references and profile.
+model RestaurantArchive {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  restaurantId String  @unique @map(name: "restaurant_id")
+  survivorId   String? @map(name: "survivor_id")
+
+  reason String @map(name: "reason")
+
+  restaurant Restaurant  @relation("ArchiveRestaurant", fields: [restaurantId], references: [id], onDelete: Cascade)
+  survivor   Restaurant? @relation("ArchiveSurvivor", fields: [survivorId], references: [id], onDelete: SetNull)
+
+  @@index([survivorId])
+  @@map(name: "restaurant_archives")
+}
+
+// One outbound link per platform (packages/lib/src/schemas/link-platform.ts). The Google Maps link is derived from
+// the place id in code, so a `google-maps` row exists only as an override. Origin is derived from `attemptId`: no
+// attempt is the operator, an attempt without a token is manual mode, an attempt with a token is an agent.
+model RestaurantLink {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  restaurantId String  @map(name: "restaurant_id")
+  attemptId    String? @map(name: "attempt_id")
+
+  platform String @map(name: "platform")
+  url      String @map(name: "url")
+
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  attempt    JobAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+
+  @@unique([restaurantId, platform])
+  @@index([attemptId])
+  @@map(name: "restaurant_links")
+}
+
+// The venue's own listing page on a guide's site: the identity key the resolver matches first, stable across
+// editions, and unique so two restaurants can never claim one listing. Distinct from Accolade.referenceUrl, which
+// may be a shared list page.
+model SourceReference {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  restaurantId String @map(name: "restaurant_id")
+  awardId      String @map(name: "award_id")
+
+  listingUrl String @map(name: "listing_url") // normalized
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  award      Award      @relation(fields: [awardId], references: [id], onDelete: Restrict)
+
+  @@unique([awardId, listingUrl])
+  @@index([restaurantId])
+  @@map(name: "source_references")
+}
+
+// A source such as the MICHELIN Guide. The facet flags declare what its accolades may carry; a non-null `scoreMax`
+// declares the score facet and its scale (scores run from 0 to `scoreMax`). An award with accolades cannot be
+// deleted (its editions restrict through their accolades); it is deactivated instead. Tier names and edition labels
+// are written in `nameLocale`.
+model Award {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  name       String  @map(name: "name")
+  nameLocale String  @map(name: "name_locale") // packages/lib/src/schemas/locale-tag.ts
+  shortName  String? @map(name: "short_name")
+  slug       String  @unique @map(name: "slug")
+  website    String? @map(name: "website")
+  hasTier    Boolean @default(false) @map(name: "has_tier")
+  hasRank    Boolean @default(false) @map(name: "has_rank")
+  hasLabel   Boolean @default(false) @map(name: "has_label")
+  scoreMax   Float?  @map(name: "score_max")
+  isActive   Boolean @default(true) @map(name: "is_active")
+
+  tiers            AwardTier[]
+  editions         AwardEdition[]
+  sourceReferences SourceReference[]
+
+  @@map(name: "awards")
+}
+
+// A distinction the award defines once and hands out year after year, such as three stars or Bib Gourmand. `level`
+// orders tiers within the award (1 = highest). The mark is the drawing registered in code under `glyphKey`, repeated
+// `glyphCount` times; an unknown key renders the generic mark, so a new award works without a code change.
+model AwardTier {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  awardId String @map(name: "award_id")
+
+  name       String @map(name: "name")
+  level      Int    @map(name: "level")
+  glyphKey   String @map(name: "glyph_key")
+  glyphCount Int    @default(1) @map(name: "glyph_count")
+
+  award Award @relation(fields: [awardId], references: [id], onDelete: Cascade)
+
+  accolades Accolade[]
+
+  @@unique([awardId, name])
+  @@unique([awardId, id])
+  @@map(name: "award_tiers")
+}
+
+// One published list of an award, such as the MICHELIN Guide Hong Kong Macau 2026. Import status is derived:
+// verified when `verifiedAt` is set, else imported when `importedAt` is set, else importing while an import-edition
+// job targeting it is queued or running, else not imported. `foundCount` is the total the import agent reported; its
+// notes go to the job result, while `notes` belongs to the operator.
+model AwardEdition {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  awardId String @map(name: "award_id")
+
+  label         String    @map(name: "label")
+  year          Int       @map(name: "year")
+  region        String?   @map(name: "region") // the scope the list covers, as free text
+  sourceUrl     String?   @map(name: "source_url")
+  expectedCount Int?      @map(name: "expected_count")
+  foundCount    Int?      @map(name: "found_count")
+  notes         String?   @map(name: "notes")
+  importedAt    DateTime? @map(name: "imported_at") @db.Timestamptz
+  verifiedAt    DateTime? @map(name: "verified_at") @db.Timestamptz
+
+  award Award @relation(fields: [awardId], references: [id], onDelete: Cascade)
+
+  accolades     Accolade[]
+  importEntries ImportEntry[]
+  jobs          Job[]
+
+  @@unique([awardId, label])
+  @@unique([awardId, id])
+  @@map(name: "award_editions")
+}
+
+// The link between a restaurant and an edition. It carries the facets the award declares (runtime check) and a
+// mandatory reference URL. `awardId` is part of both the edition and the tier relations, so a tier can only come
+// from the edition's award. A tier is held at most once per restaurant and edition; awards without tiers leave
+// `tierId` null, where "one accolade per edition" is a runtime check. Unverified until the operator sets
+// `verifiedAt`; agents only add unverified ones. Origin is derived from `attemptId`, copied from the import entry
+// when the resolver creates the accolade.
+model Accolade {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  restaurantId  String  @map(name: "restaurant_id")
+  awardId       String  @map(name: "award_id")
+  editionId     String  @map(name: "edition_id")
+  tierId        String? @map(name: "tier_id")
+  attemptId     String? @map(name: "attempt_id")
+  importEntryId String? @map(name: "import_entry_id")
+
+  rank         Int?      @map(name: "rank")
+  score        Float?    @map(name: "score")
+  label        String?   @map(name: "label") // a named prize
+  referenceUrl String    @map(name: "reference_url") // where the accolade was published
+  note         String?   @map(name: "note")
+  verifiedAt   DateTime? @map(name: "verified_at") @db.Timestamptz
+
+  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  edition     AwardEdition @relation(fields: [awardId, editionId], references: [awardId, id], onDelete: Restrict)
+  tier        AwardTier?   @relation(fields: [awardId, tierId], references: [awardId, id], onDelete: Restrict)
+  attempt     JobAttempt?  @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  importEntry ImportEntry? @relation(fields: [importEntryId], references: [id], onDelete: SetNull)
+
+  @@unique([restaurantId, editionId, tierId])
+  @@index([awardId])
+  @@index([editionId])
+  @@index([tierId])
+  @@index([attemptId])
+  @@index([importEntryId])
+  @@map(name: "accolades")
+}
+
+// One entry an import submitted for an edition: the names, address, facets and references the agent or the
+// operator's pasted list provided (packages/lib/src/schemas/import-entry.ts). Resolution state is derived: discarded
+// when `discardedAt` is set, else resolved when `restaurantId` is set, else unresolved and waiting in the inbox with
+// the candidates the resolver found. One entry yields one accolade per tier it carries.
+model ImportEntry {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  editionId    String  @map(name: "edition_id")
+  attemptId    String? @map(name: "attempt_id") // null when the operator pasted the list
+  restaurantId String? @map(name: "restaurant_id") // the restaurant it resolved to
+
+  payload     Json      @map(name: "payload") // packages/lib/src/schemas/import-entry.ts
+  placeId     String?   @map(name: "place_id") // found by the resolver
+  candidates  Json      @default("[]") @map(name: "candidates") // packages/lib/src/schemas/import-entry.ts
+  discardedAt DateTime? @map(name: "discarded_at") @db.Timestamptz
+
+  edition    AwardEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  attempt    JobAttempt?  @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  restaurant Restaurant?  @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+
+  accolades Accolade[]
+  jobs      Job[]
+
+  @@index([editionId])
+  @@index([attemptId])
+  @@index([restaurantId])
+  @@map(name: "import_entries")
+}
+
+// A bearer token for one runner: the cloud scheduled task, a local worker or a Trigger.dev worker. Only the hash is
+// stored. A revoked token stays so its attempts keep their runner.
+model RunnerToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  name       String    @map(name: "name")
+  tokenHash  String    @unique @map(name: "token_hash")
+  lastUsedAt DateTime? @map(name: "last_used_at") @db.Timestamptz
+  revokedAt  DateTime? @map(name: "revoked_at") @db.Timestamptz
+
+  attempts JobAttempt[]
+
+  @@map(name: "runner_tokens")
+}
+
+// One unit of work in the single queue: kinds in packages/lib/src/schemas/job-kind.ts, lifecycle in job-status.ts.
+// Exactly one target is set and the kind says which; if several are set, the first in definition order counts, and
+// none set is a runtime error. `leaseExpiresAt` is the claim guard: a job is claimable when queued, or running with
+// an expired lease, and a result from any attempt but the newest, or after its lease, is rejected. `priority` orders
+// the queue (lower first) so canonical descriptions precede derived work.
+model Job {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  restaurantId  String? @map(name: "restaurant_id")
+  editionId     String? @map(name: "edition_id")
+  importEntryId String? @map(name: "import_entry_id")
+
+  kind           String    @map(name: "kind")
+  status         String    @map(name: "status")
+  priority       Int       @map(name: "priority")
+  payload        Json      @map(name: "payload") // packages/lib/src/schemas/job-payload.ts
+  leaseExpiresAt DateTime? @map(name: "lease_expires_at") @db.Timestamptz
+  result         Json?     @map(name: "result")
+  error          String?   @map(name: "error")
+  startedAt      DateTime? @map(name: "started_at") @db.Timestamptz
+  finishedAt     DateTime? @map(name: "finished_at") @db.Timestamptz
+
+  restaurant  Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  edition     AwardEdition? @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  importEntry ImportEntry?  @relation(fields: [importEntryId], references: [id], onDelete: Cascade)
+
+  attempts JobAttempt[]
+
+  @@index([status, priority, createdAt])
+  @@index([kind])
+  @@index([restaurantId])
+  @@index([editionId])
+  @@index([importEntryId])
+  @@map(name: "jobs")
+}
+
+// One run of a job by one runner. `prompt` is the rendered instructions handed out at claim. `runnerTokenId` is null
+// in the operator's manual mode (copied prompt, pasted result). Rows a runner writes link here, which is how their
+// origin is known: no attempt is the operator, an attempt without a token is manual mode, an attempt with a token is
+// an agent.
+model JobAttempt {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  jobId         String  @map(name: "job_id")
+  runnerTokenId String? @map(name: "runner_token_id")
+
+  prompt       String?   @map(name: "prompt")
+  sessionUrl   String?   @map(name: "session_url") // the cloud session, for watching along
+  triggerRunId String?   @map(name: "trigger_run_id") // Trigger.dev run of a system task
+  finishedAt   DateTime? @map(name: "finished_at") @db.Timestamptz
+  error        String?   @map(name: "error")
+
+  job         Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  runnerToken RunnerToken? @relation(fields: [runnerTokenId], references: [id], onDelete: SetNull)
+
+  toolCalls      JobToolCall[]
+  posterArtworks PosterArtwork[]
+  links          RestaurantLink[]
+  accolades      Accolade[]
+  importEntries  ImportEntry[]
+
+  @@index([jobId])
+  @@index([runnerTokenId])
+  @@map(name: "job_attempts")
+}
+
+// The audit trail: one row per tool call a runner made during an attempt.
+model JobToolCall {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
+
+  attemptId String @map(name: "attempt_id")
+
+  tool       String  @map(name: "tool")
+  input      Json    @map(name: "input")
+  output     Json?   @map(name: "output")
+  error      String? @map(name: "error")
+  durationMs Int?    @map(name: "duration_ms")
+
+  attempt JobAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+  @@map(name: "job_tool_calls")
 }

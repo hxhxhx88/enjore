@@ -77,9 +77,9 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 - A restaurant is one venue at one address. It can optionally belong to a chain, see "Chain" below.
 - It has one canonical name, in its native language, and records which language that is. A restaurant with several native names, common in Hong Kong where a venue carries both a Chinese and an English official name, gets one of them as canonical by the nature of the restaurant: the Chinese name for a Cantonese kitchen, the English or Italian name for an Italian one. The other official names are kept as translations of the name, see "Locales and translations". The apps show the translation for the viewer's locale when one exists, with the canonical name alongside when it differs. It also has a stable slug for URLs.
 - It carries a region code. Every restaurant an edition recognizes is imported whatever its region; v1 enriches and publishes Hong Kong first.
-- Basics come from Google Places once the restaurant is resolved: address, district, coordinates, phone, website, opening hours and business status (open, temporarily closed, permanently closed). They are refreshed periodically. The operator or an agent can override any of them, and an overridden fact is not refreshed. Each fact records its origin: Places, agent or manual.
+- Basics come from Google Places once the restaurant is resolved: address, district, coordinates, phone, website, opening hours and business status (open, temporarily closed, permanently closed). They are refreshed periodically. The operator or an agent can override any of them, and an overridden fact is not refreshed. Each fact records its origin: Google Places, agent or manual.
 - Identity: a Google place id once resolved, and one source reference per guide listing it was imported from. See "Identity" below.
-- Outbound links: Google Maps, 大众点评 (Dianping), OpenRice, Apple Maps and the official booking page. Links are resolved automatically one platform at a time, starting with Google Maps; see "Outbound links" below.
+- Outbound links, part of the enriched profile: Google Maps, 大众点评 (Dianping), OpenRice, Apple Maps and the official booking page. Links are resolved automatically one platform at a time; see "Outbound links" below.
 
 ### Chain
 
@@ -102,15 +102,15 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 
 ### Enriched profile
 
-- Per restaurant: canonical description, poster brief, poster artwork, summary, article, structured profile, menu.
+- Per restaurant: canonical description, poster brief, poster artwork, summary, article, structured profile, menu, outbound links.
 - The profile exists in two forms with the same fields. The published profile is what the public apps read; it requires a summary and a selected poster, and the database enforces that. The draft holds work in progress, with every field optional; a restaurant has at most one, started as a copy of the published profile or empty.
 - The pipeline writes only the draft. The operator edits either the published profile directly, with immediate effect, or the draft. Publishing copies the draft onto the published profile and deletes the draft.
-- Structured fields can be locked. A regeneration fills empty fields and never touches locked ones; replacing everything is an explicit choice. Regeneration sees the current draft and accepts notes from the operator.
+- A regeneration fills empty fields; replacing everything is an explicit choice. Regeneration sees the current draft and accepts notes from the operator.
 - There is no version history. Who wrote what is in the job log: a row written by a runner links to the job attempt that produced it.
 
 ### Identity
 
-- An incoming entry is matched in this order: an existing source reference to the same guide listing, then the Google place id, then the operator's choice. The resolver proposes ranked candidates with distance and address similarity and accepts automatically only when confident. Everything else waits in the review inbox.
+- An incoming entry is matched in this order: an existing source reference to the same guide listing, then the Google place id, then the operator's choice. The resolver proposes ranked candidates with distance and address similarity and accepts automatically only when confident. Everything else waits on the edition page for the operator.
 - The same restaurant imported from two guides collapses onto one record and gains a second accolade.
 - Relocations and renames are handled in the duplicates and merge flow. Branches of a chain are distinct venues and are never merged. A venue that closes keeps its history and is withdrawn from publication.
 
@@ -119,7 +119,7 @@ A source can combine kinds. La Liste publishes a rank and a score; the 50 Best l
 - Publishing copies the draft onto the published profile. Public apps read published profiles, verified accolades and basics only, and they read them live: an edit to a published restaurant shows on the next refresh.
 - Regeneration and agent writes go to the draft; what users see does not change until the operator publishes it.
 - A restaurant is publishable when it has its basics with coordinates, at least one verified accolade, and a draft with a selected poster and a summary. The published profile cannot exist without the last two. Readiness is computed, never stored.
-- Withdraw hides a restaurant from the public apps and keeps everything. Archive withdraws it and hides it from working lists, with a reason.
+- Withdraw hides a restaurant from the public apps and keeps everything. Delete removes a restaurant with everything that belongs to it; a merged duplicate is deleted once its rows have moved to the survivor.
 
 ### Jobs
 
@@ -169,7 +169,7 @@ Work is tracked as jobs in one queue. Two classes exist:
 - The poster is the most important artifact: a horizontal 16:9 image from which a user feels what the restaurant is at a glance.
 - It is pure artwork and carries no text. An image model renders it from a poster brief. Names, cuisine, district and award marks are rendered by the apps next to the poster, so one poster serves every locale and nothing competes with the image.
 - The brief is written from the canonical description. It chooses the medium that fits the restaurant (editorial illustration, ink wash, oil painting, photoreal still life, collage, and so on), the motifs, the palette and the composition. A versioned house-style brief constrains every poster: palettes that sit well on dark backgrounds, no text, no logos, no recognizable people, no trademarks.
-- Several variants are rendered per brief. The operator picks one or asks for another round with notes. An automated check rejects artwork that contains text.
+- Several variants are rendered per brief. The operator picks one or asks for another round with notes. Text is kept out by the brief and by the operator's choice of variant; there is no automated check.
 - Artwork and the derivatives the apps need are stored in object storage and served through its public domain.
 - Articles may later embed additional illustrations produced by the same pipeline, never crawled photos.
 
@@ -180,9 +180,10 @@ Work is tracked as jobs in one queue. Two classes exist:
 
 ### Outbound links
 
-- Links are resolved automatically, one platform at a time. Google Maps comes first and follows from the place id. 大众点评 (Dianping) is next, and how to link it automatically is worked out as its own step. OpenRice, the dominant local platform, and Apple Maps follow.
+- Links are a field of the enriched profile, so an agent's finds land in the draft and reach users only when published. Each link is stored as the platform's own reference, such as a Dianping shop id, from which the apps build the web URL or the app link. Google Maps is not stored: it follows from the place id.
+- Links are resolved automatically, one platform at a time. 大众点评 (Dianping) comes first, and how to link it automatically is worked out as its own step. OpenRice, the dominant local platform, and Apple Maps follow.
 - Until a platform's resolver exists, its link is filled by hand. While the Dianping link is missing, the apps offer a name search on Dianping instead.
-- The official booking page is kept when it exists.
+- The official booking page is kept as a link, by its URL, when it exists.
 
 ### Locales and translations
 
@@ -260,7 +261,7 @@ Work is tracked as jobs in one queue. Two classes exist:
 - **Link resolution beyond Google Maps**: automatic linking to Dianping, OpenRice and Apple Maps is worked out one platform at a time. Until then those links are manual and the apps fall back to a name search.
 - **Subscription limits**: how many restaurants one night can enrich is unknown until measured. Priority ordering keeps partial runs useful, and a pay-as-you-go runner on the same tools is the escape hatch.
 - **Images and marks**: generated artwork must not contain text, logos or recognizable people; distinctions are rendered with our own drawings and attribution. Whether any official mark may be used is for the owner to settle with the guides.
-- **Stale menus and closures**: capture dates are shown and business status is checked periodically; closures surface in the review inbox.
+- **Stale menus and closures**: capture dates are shown and business status is checked periodically; closures are flagged in the restaurant list.
 - **Identity edge cases**: relocations, renames and branches of a chain need operator judgment; the merge flow and the chain entity exist for them.
 
 ## Related documents

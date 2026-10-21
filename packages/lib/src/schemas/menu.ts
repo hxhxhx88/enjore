@@ -3,7 +3,8 @@ import { z } from 'zod'
 // A digitized menu, stored as JSON in `restaurant_profiles.menu` and its draft, informed by schema.org/Menu. Text is
 // kept in the language the restaurant uses. The source URL and capture date are shown by the apps because menus go
 // stale. Prices are numbers in `currency`; `priceNote` holds what a number cannot, such as "market price" or "per
-// person".
+// person". Item photos are the operator's own or the restaurant's, uploaded to object storage; crawled photos are
+// never stored.
 
 export const dietaryTags = [
   'vegetarian',
@@ -22,12 +23,18 @@ export type DietaryTag = (typeof dietaryTags)[number]
 
 const text = z.string().trim().min(1)
 
+export const menuPhotoSchema = z.object({
+  url: z.url(),
+  caption: text.optional(),
+})
+
 export const menuItemSchema = z.object({
   name: text,
   description: text.optional(),
   price: z.number().nonnegative().optional(),
   priceNote: text.optional(),
   dietaryTags: z.array(dietaryTagSchema).default([]),
+  photos: z.array(menuPhotoSchema).default([]),
 })
 
 export const menuSectionSchema = z.object({
@@ -49,6 +56,7 @@ export const menuSchema = z.object({
   menus: z.array(menuDocumentSchema),
 })
 
+export type MenuPhoto = z.infer<typeof menuPhotoSchema>
 export type MenuItem = z.infer<typeof menuItemSchema>
 export type MenuSection = z.infer<typeof menuSectionSchema>
 export type MenuDocument = z.infer<typeof menuDocumentSchema>

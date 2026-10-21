@@ -36,7 +36,7 @@ export type ImportEntryName = z.infer<typeof importEntryNameSchema>
 export type ImportEntryPayload = z.infer<typeof importEntryPayloadSchema>
 
 // The candidates the resolver found for an entry, stored in `import_entries.candidates` best first. A candidate whose
-// restaurant has since been merged away is skipped when rendering.
+// restaurant has since been deleted is skipped when rendering.
 export const importCandidateSchema = z.object({
   restaurantId: z.string().min(1),
   distanceMeters: z.number().nonnegative().optional(),

@@ -86,18 +86,3 @@ export const structuredProfileSchema = z.object({
 })
 
 export type StructuredProfile = z.infer<typeof structuredProfileSchema>
-
-// The fields the operator can lock: a regeneration fills empty fields and never touches a locked one. Stored on the
-// restaurant (`restaurants.structured_profile_locked_fields`) so locks outlive drafts.
-export const structuredProfileFields = [
-  'cuisines',
-  'priceBand',
-  'occasions',
-  'mealPeriods',
-  'formality',
-  'reservationPolicy',
-  'menuFormat',
-  'signatureDishes',
-] as const satisfies readonly (keyof StructuredProfile)[]
-export const structuredProfileFieldSchema = z.enum(structuredProfileFields)
-export type StructuredProfileField = (typeof structuredProfileFields)[number]

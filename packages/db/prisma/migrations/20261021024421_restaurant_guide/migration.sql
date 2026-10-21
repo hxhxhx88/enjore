@@ -34,24 +34,23 @@ CREATE TABLE "restaurants" (
     "name_locale" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "region" TEXT NOT NULL,
-    "place_id" TEXT,
-    "places_refreshed_at" TIMESTAMPTZ,
+    "google_place_ref" TEXT,
+    "google_places_refreshed_at" TIMESTAMPTZ,
     "address" TEXT,
-    "address_origin" TEXT NOT NULL DEFAULT 'places',
+    "address_origin" TEXT NOT NULL,
     "district" TEXT,
-    "district_origin" TEXT NOT NULL DEFAULT 'places',
+    "district_origin" TEXT NOT NULL,
     "latitude" DOUBLE PRECISION,
     "longitude" DOUBLE PRECISION,
-    "coordinates_origin" TEXT NOT NULL DEFAULT 'places',
+    "coordinates_origin" TEXT NOT NULL,
     "phone" TEXT,
-    "phone_origin" TEXT NOT NULL DEFAULT 'places',
+    "phone_origin" TEXT NOT NULL,
     "website" TEXT,
-    "website_origin" TEXT NOT NULL DEFAULT 'places',
+    "website_origin" TEXT NOT NULL,
     "opening_hours" JSONB,
-    "opening_hours_origin" TEXT NOT NULL DEFAULT 'places',
+    "opening_hours_origin" TEXT NOT NULL,
     "business_status" TEXT,
-    "business_status_origin" TEXT NOT NULL DEFAULT 'places',
-    "structured_profile_locked_fields" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "business_status_origin" TEXT NOT NULL,
     "withdrawn_at" TIMESTAMPTZ,
 
     CONSTRAINT "restaurants_pkey" PRIMARY KEY ("id")
@@ -71,6 +70,7 @@ CREATE TABLE "restaurant_profiles" (
     "poster_brief" TEXT,
     "structured_profile" JSONB,
     "menu" JSONB,
+    "links" JSONB,
 
     CONSTRAINT "restaurant_profiles_pkey" PRIMARY KEY ("id")
 );
@@ -89,7 +89,7 @@ CREATE TABLE "restaurant_profile_drafts" (
     "poster_brief" TEXT,
     "structured_profile" JSONB,
     "menu" JSONB,
-    "reviewed_at" TIMESTAMPTZ,
+    "links" JSONB,
 
     CONSTRAINT "restaurant_profile_drafts_pkey" PRIMARY KEY ("id")
 );
@@ -105,34 +105,8 @@ CREATE TABLE "poster_artworks" (
     "width" INTEGER NOT NULL,
     "height" INTEGER NOT NULL,
     "brief" TEXT,
-    "rejection_reason" TEXT,
 
     CONSTRAINT "poster_artworks_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "restaurant_archives" (
-    "id" TEXT NOT NULL,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "restaurant_id" TEXT NOT NULL,
-    "survivor_id" TEXT,
-    "reason" TEXT NOT NULL,
-
-    CONSTRAINT "restaurant_archives_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "restaurant_links" (
-    "id" TEXT NOT NULL,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "restaurant_id" TEXT NOT NULL,
-    "attempt_id" TEXT,
-    "platform" TEXT NOT NULL,
-    "url" TEXT NOT NULL,
-
-    CONSTRAINT "restaurant_links_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -229,24 +203,11 @@ CREATE TABLE "import_entries" (
     "attempt_id" TEXT,
     "restaurant_id" TEXT,
     "payload" JSONB NOT NULL,
-    "place_id" TEXT,
+    "google_place_ref" TEXT,
     "candidates" JSONB NOT NULL DEFAULT '[]',
     "discarded_at" TIMESTAMPTZ,
 
     CONSTRAINT "import_entries_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "runner_tokens" (
-    "id" TEXT NOT NULL,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "name" TEXT NOT NULL,
-    "token_hash" TEXT NOT NULL,
-    "last_used_at" TIMESTAMPTZ,
-    "revoked_at" TIMESTAMPTZ,
-
-    CONSTRAINT "runner_tokens_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -258,14 +219,13 @@ CREATE TABLE "jobs" (
     "edition_id" TEXT,
     "import_entry_id" TEXT,
     "kind" TEXT NOT NULL,
-    "status" TEXT NOT NULL,
     "priority" INTEGER NOT NULL,
     "payload" JSONB NOT NULL,
     "lease_expires_at" TIMESTAMPTZ,
     "result" JSONB,
     "error" TEXT,
-    "started_at" TIMESTAMPTZ,
     "finished_at" TIMESTAMPTZ,
+    "cancelled_at" TIMESTAMPTZ,
 
     CONSTRAINT "jobs_pkey" PRIMARY KEY ("id")
 );
@@ -276,10 +236,11 @@ CREATE TABLE "job_attempts" (
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "job_id" TEXT NOT NULL,
-    "runner_token_id" TEXT,
+    "runner" TEXT NOT NULL,
     "prompt" TEXT,
     "session_url" TEXT,
-    "trigger_run_id" TEXT,
+    "trigger_run_ref" TEXT,
+    "cost_usd" DOUBLE PRECISION,
     "finished_at" TIMESTAMPTZ,
     "error" TEXT,
 
@@ -314,7 +275,7 @@ CREATE UNIQUE INDEX "chains_slug_key" ON "chains"("slug");
 CREATE UNIQUE INDEX "restaurants_slug_key" ON "restaurants"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "restaurants_place_id_key" ON "restaurants"("place_id");
+CREATE UNIQUE INDEX "restaurants_google_place_ref_key" ON "restaurants"("google_place_ref");
 
 -- CreateIndex
 CREATE INDEX "restaurants_chain_id_idx" ON "restaurants"("chain_id");
@@ -342,18 +303,6 @@ CREATE INDEX "poster_artworks_attempt_id_idx" ON "poster_artworks"("attempt_id")
 
 -- CreateIndex
 CREATE UNIQUE INDEX "poster_artworks_restaurant_id_id_key" ON "poster_artworks"("restaurant_id", "id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "restaurant_archives_restaurant_id_key" ON "restaurant_archives"("restaurant_id");
-
--- CreateIndex
-CREATE INDEX "restaurant_archives_survivor_id_idx" ON "restaurant_archives"("survivor_id");
-
--- CreateIndex
-CREATE INDEX "restaurant_links_attempt_id_idx" ON "restaurant_links"("attempt_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "restaurant_links_restaurant_id_platform_key" ON "restaurant_links"("restaurant_id", "platform");
 
 -- CreateIndex
 CREATE INDEX "source_references_restaurant_id_idx" ON "source_references"("restaurant_id");
@@ -404,10 +353,7 @@ CREATE INDEX "import_entries_attempt_id_idx" ON "import_entries"("attempt_id");
 CREATE INDEX "import_entries_restaurant_id_idx" ON "import_entries"("restaurant_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "runner_tokens_token_hash_key" ON "runner_tokens"("token_hash");
-
--- CreateIndex
-CREATE INDEX "jobs_status_priority_created_at_idx" ON "jobs"("status", "priority", "created_at");
+CREATE INDEX "jobs_finished_at_cancelled_at_priority_created_at_idx" ON "jobs"("finished_at", "cancelled_at", "priority", "created_at");
 
 -- CreateIndex
 CREATE INDEX "jobs_kind_idx" ON "jobs"("kind");
@@ -423,9 +369,6 @@ CREATE INDEX "jobs_import_entry_id_idx" ON "jobs"("import_entry_id");
 
 -- CreateIndex
 CREATE INDEX "job_attempts_job_id_idx" ON "job_attempts"("job_id");
-
--- CreateIndex
-CREATE INDEX "job_attempts_runner_token_id_idx" ON "job_attempts"("runner_token_id");
 
 -- CreateIndex
 CREATE INDEX "job_tool_calls_attempt_id_idx" ON "job_tool_calls"("attempt_id");
@@ -450,18 +393,6 @@ ALTER TABLE "poster_artworks" ADD CONSTRAINT "poster_artworks_restaurant_id_fkey
 
 -- AddForeignKey
 ALTER TABLE "poster_artworks" ADD CONSTRAINT "poster_artworks_attempt_id_fkey" FOREIGN KEY ("attempt_id") REFERENCES "job_attempts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "restaurant_archives" ADD CONSTRAINT "restaurant_archives_restaurant_id_fkey" FOREIGN KEY ("restaurant_id") REFERENCES "restaurants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "restaurant_archives" ADD CONSTRAINT "restaurant_archives_survivor_id_fkey" FOREIGN KEY ("survivor_id") REFERENCES "restaurants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "restaurant_links" ADD CONSTRAINT "restaurant_links_restaurant_id_fkey" FOREIGN KEY ("restaurant_id") REFERENCES "restaurants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "restaurant_links" ADD CONSTRAINT "restaurant_links_attempt_id_fkey" FOREIGN KEY ("attempt_id") REFERENCES "job_attempts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "source_references" ADD CONSTRAINT "source_references_restaurant_id_fkey" FOREIGN KEY ("restaurant_id") REFERENCES "restaurants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -510,9 +441,6 @@ ALTER TABLE "jobs" ADD CONSTRAINT "jobs_import_entry_id_fkey" FOREIGN KEY ("impo
 
 -- AddForeignKey
 ALTER TABLE "job_attempts" ADD CONSTRAINT "job_attempts_job_id_fkey" FOREIGN KEY ("job_id") REFERENCES "jobs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "job_attempts" ADD CONSTRAINT "job_attempts_runner_token_id_fkey" FOREIGN KEY ("runner_token_id") REFERENCES "runner_tokens"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "job_tool_calls" ADD CONSTRAINT "job_tool_calls_attempt_id_fkey" FOREIGN KEY ("attempt_id") REFERENCES "job_attempts"("id") ON DELETE CASCADE ON UPDATE CASCADE;

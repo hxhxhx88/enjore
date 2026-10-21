@@ -10,7 +10,7 @@ const notes = z.string().trim().min(1).optional()
 export const jobPayloadSchemas = {
   'import-edition': z.object({}),
   'canonical-description': z.object({ notes }),
-  // `replaceAll` false fills empty fields and leaves locked ones alone; true is the confirmed "replace everything".
+  // `replaceAll` false fills empty fields only; true is the confirmed "replace everything".
   'structured-profile': z.object({ notes, replaceAll: z.boolean().default(false) }),
   'menu': z.object({ notes }),
   // A null locale means the restaurant's native locale, the profile's text columns; any other locale is written
@@ -21,7 +21,7 @@ export const jobPayloadSchemas = {
   'links': z.object({}),
   'resolve-identity': z.object({}),
   'render-poster': z.object({ notes, variantCount: z.number().int().min(1).max(8).optional() }),
-  'refresh-places': z.object({}),
+  'refresh-google-places': z.object({}),
 } satisfies Record<JobKind, z.ZodType>
 
 export type JobPayload<K extends JobKind = JobKind> = z.infer<(typeof jobPayloadSchemas)[K]>

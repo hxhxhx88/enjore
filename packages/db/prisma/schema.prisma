@@ -89,11 +89,11 @@ model Chain {
 }
 
 // One venue at one address. The canonical name is in the venue's native language (`nameLocale`); the other official
-// names are Translation rows of `name`. Each of the seven Places facts carries an origin
-// (packages/lib/src/schemas/fact-origin.ts): "places" facts are refreshed periodically, "agent" and "manual" facts are
-// never refreshed, and a null value with a manual origin is a fact the operator cleared. Publication state is derived:
-// archived when an archive row exists, else withdrawn when `withdrawnAt` is set, else published when a profile row
-// exists, else unpublished. Readiness to publish is computed from the checklist, never stored.
+// names are Translation rows of `name`. Each of the seven Google Places facts carries an origin: Google Places facts
+// are refreshed periodically, agent and manual facts are never refreshed, and a null value with a manual origin is a
+// fact the operator cleared. Publication state is derived: withdrawn when `withdrawnAt` is set, else published when a
+// profile row exists, else unpublished. Readiness to publish is computed from the checklist, never stored. A duplicate
+// is merged in code: its rows move to the survivor and it is deleted.
 model Restaurant {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
@@ -101,38 +101,34 @@ model Restaurant {
 
   chainId String? @map(name: "chain_id")
 
-  name                          String    @map(name: "name")
-  nameLocale                    String    @map(name: "name_locale") // packages/lib/src/schemas/locale-tag.ts
-  slug                          String    @unique @map(name: "slug")
-  region                        String    @map(name: "region") // packages/lib/src/schemas/region.ts
-  placeId                       String?   @unique @map(name: "place_id") // Google place id, set once resolved
-  placesRefreshedAt             DateTime? @map(name: "places_refreshed_at") @db.Timestamptz
-  address                       String?   @map(name: "address")
-  addressOrigin                 String    @default("places") @map(name: "address_origin")
-  district                      String?   @map(name: "district")
-  districtOrigin                String    @default("places") @map(name: "district_origin")
-  latitude                      Float?    @map(name: "latitude") // WGS-84; set together with longitude
-  longitude                     Float?    @map(name: "longitude")
-  coordinatesOrigin             String    @default("places") @map(name: "coordinates_origin")
-  phone                         String?   @map(name: "phone")
-  phoneOrigin                   String    @default("places") @map(name: "phone_origin")
-  website                       String?   @map(name: "website")
-  websiteOrigin                 String    @default("places") @map(name: "website_origin")
-  openingHours                  Json?     @map(name: "opening_hours") // packages/lib/src/schemas/opening-hours.ts
-  openingHoursOrigin            String    @default("places") @map(name: "opening_hours_origin")
-  businessStatus                String?   @map(name: "business_status") // packages/lib/src/schemas/business-status.ts
-  businessStatusOrigin          String    @default("places") @map(name: "business_status_origin")
-  structuredProfileLockedFields String[]  @default([]) @map(name: "structured_profile_locked_fields") // packages/lib/src/schemas/structured-profile.ts; locks outlive drafts
-  withdrawnAt                   DateTime? @map(name: "withdrawn_at") @db.Timestamptz // hidden from the public while set; the profile stays
+  name                    String    @map(name: "name")
+  nameLocale              String    @map(name: "name_locale") // packages/lib/src/schemas/locale-tag.ts
+  slug                    String    @unique @map(name: "slug")
+  region                  String    @map(name: "region") // packages/lib/src/schemas/region.ts
+  googlePlaceRef          String?   @unique @map(name: "google_place_ref") // the Google place id, set once resolved
+  googlePlacesRefreshedAt DateTime? @map(name: "google_places_refreshed_at") @db.Timestamptz
+  address                 String?   @map(name: "address")
+  addressOrigin           String    @map(name: "address_origin") // packages/lib/src/schemas/fact-origin.ts
+  district                String?   @map(name: "district")
+  districtOrigin          String    @map(name: "district_origin") // packages/lib/src/schemas/fact-origin.ts
+  latitude                Float?    @map(name: "latitude") // WGS-84; set together with longitude
+  longitude               Float?    @map(name: "longitude")
+  coordinatesOrigin       String    @map(name: "coordinates_origin") // packages/lib/src/schemas/fact-origin.ts
+  phone                   String?   @map(name: "phone")
+  phoneOrigin             String    @map(name: "phone_origin") // packages/lib/src/schemas/fact-origin.ts
+  website                 String?   @map(name: "website")
+  websiteOrigin           String    @map(name: "website_origin") // packages/lib/src/schemas/fact-origin.ts
+  openingHours            Json?     @map(name: "opening_hours") // packages/lib/src/schemas/opening-hours.ts
+  openingHoursOrigin      String    @map(name: "opening_hours_origin") // packages/lib/src/schemas/fact-origin.ts
+  businessStatus          String?   @map(name: "business_status") // packages/lib/src/schemas/business-status.ts
+  businessStatusOrigin    String    @map(name: "business_status_origin") // packages/lib/src/schemas/fact-origin.ts
+  withdrawnAt             DateTime? @map(name: "withdrawn_at") @db.Timestamptz // hidden from the public while set; the profile stays
 
   chain Chain? @relation(fields: [chainId], references: [id], onDelete: SetNull)
 
   profile          RestaurantProfile?
   draft            RestaurantProfileDraft?
-  archive          RestaurantArchive?      @relation("ArchiveRestaurant")
-  mergedArchives   RestaurantArchive[]     @relation("ArchiveSurvivor")
   posterArtworks   PosterArtwork[]
-  links            RestaurantLink[]
   sourceReferences SourceReference[]
   accolades        Accolade[]
   importEntries    ImportEntry[]
@@ -163,6 +159,7 @@ model RestaurantProfile {
   posterBrief          String? @map(name: "poster_brief") // the text the poster artwork is rendered from
   structuredProfile    Json?   @map(name: "structured_profile") // packages/lib/src/schemas/structured-profile.ts
   menu                 Json?   @map(name: "menu") // packages/lib/src/schemas/menu.ts
+  links                Json?   @map(name: "links") // packages/lib/src/schemas/links.ts
 
   restaurant    Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   posterArtwork PosterArtwork @relation(fields: [restaurantId, posterArtworkId], references: [restaurantId, id], onDelete: Restrict)
@@ -173,8 +170,8 @@ model RestaurantProfile {
 
 // The working copy of a restaurant's enriched profile and the only table the pipeline writes. Same columns as
 // RestaurantProfile with every field optional, so agents can fill it one step at a time. A draft starts as a copy of
-// the published profile, or empty when there is none. The inbox lists drafts whose `updatedAt` is newer than
-// `reviewedAt`.
+// the published profile, or empty when there is none. A restaurant with a draft is flagged in the restaurant list
+// until the draft is published or discarded.
 model RestaurantProfileDraft {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
@@ -183,14 +180,14 @@ model RestaurantProfileDraft {
   restaurantId    String  @unique @map(name: "restaurant_id")
   posterArtworkId String? @map(name: "poster_artwork_id")
 
-  locale               String    @map(name: "locale") // packages/lib/src/schemas/locale-tag.ts; the language of the text columns
-  summary              String?   @map(name: "summary")
-  article              String?   @map(name: "article")
-  canonicalDescription String?   @map(name: "canonical_description")
-  posterBrief          String?   @map(name: "poster_brief")
-  structuredProfile    Json?     @map(name: "structured_profile") // packages/lib/src/schemas/structured-profile.ts
-  menu                 Json?     @map(name: "menu") // packages/lib/src/schemas/menu.ts
-  reviewedAt           DateTime? @map(name: "reviewed_at") @db.Timestamptz
+  locale               String  @map(name: "locale") // packages/lib/src/schemas/locale-tag.ts; the language of the text columns
+  summary              String? @map(name: "summary")
+  article              String? @map(name: "article")
+  canonicalDescription String? @map(name: "canonical_description")
+  posterBrief          String? @map(name: "poster_brief")
+  structuredProfile    Json?   @map(name: "structured_profile") // packages/lib/src/schemas/structured-profile.ts
+  menu                 Json?   @map(name: "menu") // packages/lib/src/schemas/menu.ts
+  links                Json?   @map(name: "links") // packages/lib/src/schemas/links.ts
 
   restaurant    Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   posterArtwork PosterArtwork? @relation(fields: [restaurantId, posterArtworkId], references: [restaurantId, id], onDelete: Restrict)
@@ -200,9 +197,9 @@ model RestaurantProfileDraft {
 }
 
 // One poster variant, rendered by a job or uploaded by the operator (no attempt). `brief` is the text the render
-// used, so a variant explains itself after the draft's brief changes. The automated text check sets
-// `rejectionReason`; a rejected variant stays for the record and cannot be selected (runtime check).
-// `@@unique([restaurantId, id])` is what lets a profile reference artwork through its restaurant.
+// used, so a variant explains itself after the draft's brief changes. Text in artwork is kept out by the brief and by
+// the operator's choice of variant; nothing checks it automatically. `@@unique([restaurantId, id])` is what lets a
+// profile reference artwork through its restaurant.
 model PosterArtwork {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
@@ -211,11 +208,10 @@ model PosterArtwork {
   restaurantId String  @map(name: "restaurant_id")
   attemptId    String? @map(name: "attempt_id")
 
-  url             String  @unique @map(name: "url") // public object storage URL of the original
-  width           Int     @map(name: "width")
-  height          Int     @map(name: "height")
-  brief           String? @map(name: "brief")
-  rejectionReason String? @map(name: "rejection_reason")
+  url    String  @unique @map(name: "url") // public object storage URL of the original
+  width  Int     @map(name: "width")
+  height Int     @map(name: "height")
+  brief  String? @map(name: "brief")
 
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   attempt    JobAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
@@ -226,47 +222,6 @@ model PosterArtwork {
   @@unique([restaurantId, id])
   @@index([attemptId])
   @@map(name: "poster_artworks")
-}
-
-// Present when a restaurant is archived: hidden from the public and from working lists, with a reason. A merged
-// duplicate is archived with `survivorId` pointing at the record that kept its accolades, references and profile.
-model RestaurantArchive {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
-
-  restaurantId String  @unique @map(name: "restaurant_id")
-  survivorId   String? @map(name: "survivor_id")
-
-  reason String @map(name: "reason")
-
-  restaurant Restaurant  @relation("ArchiveRestaurant", fields: [restaurantId], references: [id], onDelete: Cascade)
-  survivor   Restaurant? @relation("ArchiveSurvivor", fields: [survivorId], references: [id], onDelete: SetNull)
-
-  @@index([survivorId])
-  @@map(name: "restaurant_archives")
-}
-
-// One outbound link per platform (packages/lib/src/schemas/link-platform.ts). The Google Maps link is derived from
-// the place id in code, so a `google-maps` row exists only as an override. Origin is derived from `attemptId`: no
-// attempt is the operator, an attempt without a token is manual mode, an attempt with a token is an agent.
-model RestaurantLink {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
-
-  restaurantId String  @map(name: "restaurant_id")
-  attemptId    String? @map(name: "attempt_id")
-
-  platform String @map(name: "platform")
-  url      String @map(name: "url")
-
-  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  attempt    JobAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
-
-  @@unique([restaurantId, platform])
-  @@index([attemptId])
-  @@map(name: "restaurant_links")
 }
 
 // The venue's own listing page on a guide's site: the identity key the resolver matches first, stable across
@@ -343,8 +298,8 @@ model AwardTier {
 
 // One published list of an award, such as the MICHELIN Guide Hong Kong Macau 2026. Import status is derived:
 // verified when `verifiedAt` is set, else imported when `importedAt` is set, else importing while an import-edition
-// job targeting it is queued or running, else not imported. `foundCount` is the total the import agent reported; its
-// notes go to the job result, while `notes` belongs to the operator.
+// job targeting it is neither finished nor cancelled, else not imported. `foundCount` is the total the import agent
+// reported; its notes go to the job result, while `notes` belongs to the operator.
 model AwardEdition {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
@@ -415,8 +370,8 @@ model Accolade {
 
 // One entry an import submitted for an edition: the names, address, facets and references the agent or the
 // operator's pasted list provided (packages/lib/src/schemas/import-entry.ts). Resolution state is derived: discarded
-// when `discardedAt` is set, else resolved when `restaurantId` is set, else unresolved and waiting in the inbox with
-// the candidates the resolver found. One entry yields one accolade per tier it carries.
+// when `discardedAt` is set, else resolved when `restaurantId` is set, else unresolved and waiting on the edition page
+// with the candidates the resolver found. One entry yields one accolade per tier it carries.
 model ImportEntry {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
@@ -426,10 +381,10 @@ model ImportEntry {
   attemptId    String? @map(name: "attempt_id") // null when the operator pasted the list
   restaurantId String? @map(name: "restaurant_id") // the restaurant it resolved to
 
-  payload     Json      @map(name: "payload") // packages/lib/src/schemas/import-entry.ts
-  placeId     String?   @map(name: "place_id") // found by the resolver
-  candidates  Json      @default("[]") @map(name: "candidates") // packages/lib/src/schemas/import-entry.ts
-  discardedAt DateTime? @map(name: "discarded_at") @db.Timestamptz
+  payload        Json      @map(name: "payload") // packages/lib/src/schemas/import-entry.ts
+  googlePlaceRef String?   @map(name: "google_place_ref") // the Google place id the resolver found
+  candidates     Json      @default("[]") @map(name: "candidates") // packages/lib/src/schemas/import-entry.ts
+  discardedAt    DateTime? @map(name: "discarded_at") @db.Timestamptz
 
   edition    AwardEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
   attempt    JobAttempt?  @relation(fields: [attemptId], references: [id], onDelete: SetNull)
@@ -444,28 +399,14 @@ model ImportEntry {
   @@map(name: "import_entries")
 }
 
-// A bearer token for one runner: the cloud scheduled task, a local worker or a Trigger.dev worker. Only the hash is
-// stored. A revoked token stays so its attempts keep their runner.
-model RunnerToken {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
-
-  name       String    @map(name: "name")
-  tokenHash  String    @unique @map(name: "token_hash")
-  lastUsedAt DateTime? @map(name: "last_used_at") @db.Timestamptz
-  revokedAt  DateTime? @map(name: "revoked_at") @db.Timestamptz
-
-  attempts JobAttempt[]
-
-  @@map(name: "runner_tokens")
-}
-
-// One unit of work in the single queue: kinds in packages/lib/src/schemas/job-kind.ts, lifecycle in job-status.ts.
-// Exactly one target is set and the kind says which; if several are set, the first in definition order counts, and
-// none set is a runtime error. `leaseExpiresAt` is the claim guard: a job is claimable when queued, or running with
-// an expired lease, and a result from any attempt but the newest, or after its lease, is rejected. `priority` orders
-// the queue (lower first) so canonical descriptions precede derived work.
+// One unit of work in the single queue. Exactly one target is set and the kind says which; if several are set, the
+// first in definition order counts, and none set is a runtime error. Status is derived
+// (packages/lib/src/schemas/job-status.ts): cancelled when `cancelledAt` is set, else failed when finished with an
+// error, else succeeded when finished, else running while `leaseExpiresAt` is in the future, else queued. The lease is
+// the claim guard: claiming is one atomic update of a job that is neither finished nor cancelled and whose lease is
+// absent or expired, and a result from any attempt but the newest, or after its lease, is rejected. Retry clears the
+// finish fields and the lease. `priority` orders the queue (lower first) so canonical descriptions precede derived
+// work.
 model Job {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
@@ -475,15 +416,14 @@ model Job {
   editionId     String? @map(name: "edition_id")
   importEntryId String? @map(name: "import_entry_id")
 
-  kind           String    @map(name: "kind")
-  status         String    @map(name: "status")
+  kind           String    @map(name: "kind") // packages/lib/src/schemas/job-kind.ts
   priority       Int       @map(name: "priority")
   payload        Json      @map(name: "payload") // packages/lib/src/schemas/job-payload.ts
   leaseExpiresAt DateTime? @map(name: "lease_expires_at") @db.Timestamptz
   result         Json?     @map(name: "result")
   error          String?   @map(name: "error")
-  startedAt      DateTime? @map(name: "started_at") @db.Timestamptz
   finishedAt     DateTime? @map(name: "finished_at") @db.Timestamptz
+  cancelledAt    DateTime? @map(name: "cancelled_at") @db.Timestamptz
 
   restaurant  Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   edition     AwardEdition? @relation(fields: [editionId], references: [id], onDelete: Cascade)
@@ -491,7 +431,7 @@ model Job {
 
   attempts JobAttempt[]
 
-  @@index([status, priority, createdAt])
+  @@index([finishedAt, cancelledAt, priority, createdAt])
   @@index([kind])
   @@index([restaurantId])
   @@index([editionId])
@@ -499,35 +439,34 @@ model Job {
   @@map(name: "jobs")
 }
 
-// One run of a job by one runner. `prompt` is the rendered instructions handed out at claim. `runnerTokenId` is null
-// in the operator's manual mode (copied prompt, pasted result). Rows a runner writes link here, which is how their
-// origin is known: no attempt is the operator, an attempt without a token is manual mode, an attempt with a token is
-// an agent.
+// One run of a job by one runner (packages/lib/src/schemas/runner.ts); the manual runner is the operator pasting a
+// result for a copied prompt. `prompt` is the rendered instructions handed out at claim. `costUsd` is what the run
+// spent on paid services such as image renders; runs on the Claude subscription leave it null. Rows a runner writes
+// link here, which is how their origin is known: no attempt is the operator, a manual attempt is manual mode, any
+// other runner is an agent or a system task.
 model JobAttempt {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at") @db.Timestamptz
   updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at") @db.Timestamptz
 
-  jobId         String  @map(name: "job_id")
-  runnerTokenId String? @map(name: "runner_token_id")
+  jobId String @map(name: "job_id")
 
-  prompt       String?   @map(name: "prompt")
-  sessionUrl   String?   @map(name: "session_url") // the cloud session, for watching along
-  triggerRunId String?   @map(name: "trigger_run_id") // Trigger.dev run of a system task
-  finishedAt   DateTime? @map(name: "finished_at") @db.Timestamptz
-  error        String?   @map(name: "error")
+  runner        String    @map(name: "runner") // packages/lib/src/schemas/runner.ts
+  prompt        String?   @map(name: "prompt")
+  sessionUrl    String?   @map(name: "session_url") // the cloud session, for watching along
+  triggerRunRef String?   @map(name: "trigger_run_ref") // the Trigger.dev run of a system task
+  costUsd       Float?    @map(name: "cost_usd")
+  finishedAt    DateTime? @map(name: "finished_at") @db.Timestamptz
+  error         String?   @map(name: "error")
 
-  job         Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  runnerToken RunnerToken? @relation(fields: [runnerTokenId], references: [id], onDelete: SetNull)
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   toolCalls      JobToolCall[]
   posterArtworks PosterArtwork[]
-  links          RestaurantLink[]
   accolades      Accolade[]
   importEntries  ImportEntry[]
 
   @@index([jobId])
-  @@index([runnerTokenId])
   @@map(name: "job_attempts")
 }
 
@@ -539,7 +478,7 @@ model JobToolCall {
 
   attemptId String @map(name: "attempt_id")
 
-  tool       String  @map(name: "tool")
+  tool       String  @map(name: "tool") // packages/lib/src/schemas/job-tool.ts
   input      Json    @map(name: "input")
   output     Json?   @map(name: "output")
   error      String? @map(name: "error")

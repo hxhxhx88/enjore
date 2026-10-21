@@ -14,7 +14,7 @@ export const jobKinds = [
   'links',
   'resolve-identity',
   'render-poster',
-  'refresh-places',
+  'refresh-google-places',
 ] as const
 export const jobKindSchema = z.enum(jobKinds)
 export type JobKind = (typeof jobKinds)[number]
@@ -34,5 +34,5 @@ export const jobKindClasses: Record<JobKind, JobClass> = {
   'links': 'agent',
   'resolve-identity': 'system',
   'render-poster': 'system',
-  'refresh-places': 'system',
+  'refresh-google-places': 'system',
 }

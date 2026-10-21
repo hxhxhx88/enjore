@@ -15,23 +15,23 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 ## Concepts and states
 
-- **Restaurant publication state**: unpublished (no published profile), published, withdrawn, archived. Readiness to publish is computed from a checklist and never stored.
+- **Restaurant publication state**: unpublished (no published profile), published, withdrawn. Readiness to publish is computed from a checklist and never stored.
 - **Region**: every restaurant carries one. Imports are complete across regions; enrichment and publication focus on Hong Kong first.
 - **Business status**: open, temporarily closed, permanently closed. It comes from Google Places, is refreshed periodically, and can be overridden by the operator.
 - **Accolade**: unverified until the operator verifies it. Agents can only add unverified accolades.
-- **Enriched profile**: the published profile, which requires a summary and a selected poster, and at most one draft with every field optional. Agents write only the draft; the operator edits either. Publish copies the draft onto the published profile and deletes the draft. Structured fields can be locked.
-- **Origin**: where a value came from. Places facts record places, agent or manual. Anything a runner writes links to the job attempt that wrote it, so its origin is read from there: no attempt is the operator, an attempt without a runner token is manual mode, an attempt with a token is an agent.
-- **Job**: queued, running, succeeded, failed, cancelled. Each run of a job is an attempt with a runner, a lease and a log.
+- **Enriched profile**: the published profile, which requires a summary and a selected poster, and at most one draft with every field optional. The outbound links are a field of the profile like the others. Agents write only the draft; the operator edits either. Publish copies the draft onto the published profile and deletes the draft.
+- **Origin**: where a value came from. Places facts record Google Places, agent or manual. Anything a runner writes links to the job attempt that wrote it, so its origin is read from there: no attempt is the operator, an attempt by the manual runner is manual mode, any other runner is an agent or a system task.
+- **Job**: queued, running, succeeded, failed or cancelled, read from its lease, finish and cancel times rather than stored. Each run of a job is an attempt with a runner, a log of tool calls and a cost.
 - **Edition import status**: not imported, importing, imported, verified.
 
 ## Pages
 
 - **"Dashboard"** at `/`: counts of restaurants by publication state, restaurants missing each profile field, jobs queued, running and failed, editions awaiting verification, the last agent run with its link, recent activity.
-- **"Inbox"** at `/inbox`: everything that waits for the operator: unresolved import entries, unverified accolades, drafts changed since the operator last reviewed them, published restaurants whose business status turned closed, failed jobs.
-- **"Restaurants"** at `/restaurants`: list, search, filters by region, chain, publication state, award, missing profile field and business status, and batch actions, with the detail at `/restaurants/[id]`.
-- **"Awards"** at `/awards`: awards with their tiers and editions, with the edition detail at `/awards/[id]/editions/[editionId]`.
-- **"Jobs"** at `/jobs`: the queue, with the job detail at `/jobs/[id]`.
-- **"Settings"** at `/settings`: configuration status of integrations and runner tokens.
+- **"Restaurants"** at `/restaurants`: list, search, filters by region, chain, publication state, award, missing profile field, pending draft and business status, and batch actions, with the detail at `/restaurants/[id]`. A restaurant with a draft waiting, or a published one whose business status turned closed, carries a badge in the list.
+- **"Awards"** at `/awards`: awards with their tiers and editions, with the edition detail at `/awards/[id]/editions/[editionId]`, where unresolved entries and unverified accolades wait for the operator.
+- **"Jobs"** at `/jobs`: the queue, with failed jobs flagged, and the job detail at `/jobs/[id]`.
+- **"Settings"** at `/settings`: configuration status of integrations and runner secrets.
+- There is no inbox: whatever waits for the operator is flagged on the list where it lives.
 - The template's "Users" pages are removed.
 
 ## Detailed behavior
@@ -47,22 +47,22 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 - "Import with agent" enqueues an edition import job and sets the edition to importing. The agent finds the official list and submits every entry it contains, whatever its region, with every official name it finds and which one it proposes as canonical from the nature of the restaurant, the address, the facets it holds and the reference URL. The other names are stored as translations of the name. It reports the total it found. An import is complete or it is not done: once an edition is imported, nobody returns to it when another city's turn comes.
 - "Copy prompt" shows the same instructions for pasting into Claude or ChatGPT, together with the result format. "Paste a list" accepts that result, or any list the operator assembled, and runs it through the same resolver.
-- Each submitted entry is resolved to a restaurant (see "Resolve a restaurant"). A resolved entry creates an unverified accolade, and a new restaurant tagged with its region when none existed. An unresolved entry waits in the inbox with the candidates the resolver found.
+- Each submitted entry is resolved to a restaurant (see "Resolve a restaurant"). A resolved entry creates an unverified accolade, and a new restaurant tagged with its region when none existed. An unresolved entry waits on the edition page with the candidates the resolver found.
 - The edition page shows the expected count, the submitted count, the resolved and unresolved counts, and the accolade table: restaurant, facets, reference, origin, verified.
 - "Mark verified" on the edition requires no unresolved entries and verifies every accolade of the edition in one step. Accolades can also be verified one by one.
 
 ### Resolve a restaurant
 
 - An entry is matched in this order: an existing source reference to the same guide listing, then the Google place id found through Places, then the operator's choice.
-- The resolver proposes ranked candidates with distance and address similarity and accepts automatically only when confident. Otherwise the inbox shows the candidates and the operator picks one, creates a new restaurant, or discards the entry.
+- The resolver proposes ranked candidates with distance and address similarity and accepts automatically only when confident. Otherwise the edition page shows the candidates and the operator picks one, creates a new restaurant, or discards the entry.
 - Creating a restaurant by hand works the same way: a name and address, or a Google Maps link, go through the resolver. A place id or guide listing that already belongs to a restaurant opens that restaurant instead of creating another, and a close name within walking distance is shown as a warning. Branches of the same chain are shown as such, not as duplicates.
 - Entries outside Hong Kong are imported like any other. The region code lets the operator focus enrichment and publication on Hong Kong first and come back to other regions without re-importing.
 
 ### Edit basics and links
 
-- Basics: canonical name with its language, the other official names as translations of the name with "Make canonical" to swap, slug, chain (optional: pick an existing chain or create one), region, address, district, coordinates with a map preview, phone, website, booking link, opening hours, business status. Facts from Places are filled in at resolution. Every fact shows its origin: Places, agent or manual. A fact the operator edits becomes manual and is no longer refreshed.
+- Basics: canonical name with its language, the other official names as translations of the name with "Make canonical" to swap, slug, chain (optional: pick an existing chain or create one), region, address, district, coordinates with a map preview, phone, website, opening hours, business status. Facts from Places are filled in at resolution. Every fact shows its origin: Google Places, agent or manual. A fact the operator edits becomes manual and is no longer refreshed.
 - "Refresh from Places" updates every fact that is not manual and records the date. The same refresh runs periodically.
-- Links: Google Maps is derived from the place id and can be overridden. Links to 大众点评 (Dianping), OpenRice and Apple Maps are filled by hand until their resolvers exist, Dianping first. While the Dianping link is empty, the field explains that the apps fall back to "Search on Dianping". The booking page is kept when it exists.
+- Links: Google Maps is derived from the place id. 大众点评 (Dianping), OpenRice and Apple Maps are stored as the platform's own identifier, from which the apps build the web URL or the app link, and the booking page as its URL. Links are a field of the profile: an agent's finds land in the draft, and the operator edits the draft or the published profile. They are filled by hand until their resolvers exist, Dianping first. While the Dianping link is empty, the field explains that the apps fall back to "Search on Dianping".
 
 ### Manage accolades on a restaurant
 
@@ -74,7 +74,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - The profile section of the restaurant page shows every field of the enriched profile with its published value and its draft value side by side. Each draft field has the same controls: "Edit", "Clear", "Generate" when it is empty or "Regenerate" with an optional notes field. The published value can be edited directly, with immediate effect.
 - The section has "Publish draft", enabled when the checklist passes, and "Discard draft".
 - The canonical description, the summary and the article are edited in a markdown editor with preview. The canonical description also lists its sources.
-- The structured profile and the menu are edited in a grouped form, every field editable and clearable, with a raw JSON view validated against the shared schema. Any profile field can be locked. Regeneration fills empty fields by default and leaves locked fields alone; "Replace everything" is a separate, confirmed action.
+- The structured profile and the menu are edited in a grouped form, every field editable and clearable, with a raw JSON view validated against the shared schema. Regeneration fills empty fields by default; "Replace everything" is a separate, confirmed action.
 - Regeneration passes the current draft and the notes to the agent, so the operator can steer: "shorter", "mention the set lunch", "the chef left in 2025".
 - Nothing in a draft is shown to users until published. See "Publish and withdraw".
 
@@ -84,7 +84,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - "Generate brief", or "Regenerate brief" with notes, writes a new brief from the canonical description. A new brief enqueues rendering automatically unless the operator chooses to review the brief first.
 - "Regenerate artwork" with notes renders a new round of variants from the current brief. "Upload artwork" accepts an image the operator produced elsewhere and treats it as a variant with upload origin.
 - Selecting a variant sets it on the draft and produces the derivatives the apps need. Posters carry no text: names, cuisine, district and award marks are rendered by the apps.
-- Artwork with detectable text is rejected automatically and shown as rejected.
+- Text in artwork is kept out by the brief and by the operator's choice of variant; there is no automated check.
 
 ### Enrich in batch
 
@@ -95,36 +95,36 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 ### Publish and withdraw
 
 - "Publish draft" checks the list: basics with coordinates, at least one verified accolade, a selected poster and a summary in the draft, and the launch-locale summary when the restaurant's native locale differs. Missing items are listed and the button stays disabled until they are met.
-- Publishing copies the draft onto the published profile in one step and deletes the draft. Edits to the published profile, basics, links and verified accolades take effect immediately. Regenerations and agent writes go to a new draft, which the page shows as "Draft changes" next to the published values, with "Publish draft".
-- "Withdraw" removes the restaurant from the public apps and keeps everything. "Archive" withdraws it and hides it from working lists, with a reason; archived restaurants remain reachable through a filter.
+- Publishing copies the draft onto the published profile in one step and deletes the draft. Edits to the published profile, basics and verified accolades take effect immediately. Regenerations and agent writes go to a new draft, which the page shows as "Draft changes" next to the published values, with "Publish draft".
+- "Withdraw" removes the restaurant from the public apps and keeps everything. "Delete" removes the restaurant with its profile, draft, artwork, accolades, references and jobs, after confirmation.
 
 ### Merge duplicates
 
 - The duplicates section lists candidates with a close name within walking distance; a place id and a guide listing belong to one restaurant each, so they never produce duplicates. Two branches of the same chain are distinct restaurants, each with its own record and accolades, so they are never proposed as candidates for merging.
-- "Merge" asks which record survives. Accolades, source references and links of the other record move to the survivor, its profile and draft move when the survivor has none, conflicting facts and unique keys are shown for a choice, and the merged record is archived with a pointer to the survivor. The survivor's published profile is not changed by the merge.
+- "Merge" asks which record survives. Accolades, source references, import entries and artwork of the other record move to the survivor, its profile and draft move when the survivor has none, conflicting facts and unique keys are shown for a choice, and the other record is then deleted. The survivor's published profile is not changed by the merge.
 
 ### Run agents
 
 - "Run now" on the jobs page fires the cloud scheduled task through its API trigger and shows the link to the session so the operator can watch it. The page explains that the schedule also runs hourly and that fires per hour are limited.
 - A local worker on the operator's machine is an alternative runner using the same tools. The jobs page shows which runner holds each job.
 - Manual mode is available on any queued agent job: "Copy prompt" copies the rendered instructions and the expected result format, and "Paste result" validates the result and writes it through the same path the tools use, with manual origin.
-- Runner tokens are created, named and revoked in "Settings". Every write a runner makes links to its attempt, and so to the token that made it.
+- Each runner authenticates with its own secret from the environment, so rotating one is a deployment. Every write a runner makes links to its attempt, which records the runner.
 
 ### Jobs page
 
 - The list shows kind, target, status, runner, attempts, and created and finished times, with filters by kind, status, runner and restaurant.
-- The job detail shows the payload, the rendered prompt, every attempt with its runner, lease and session link, the log of tool calls, the result and the error. "Retry" re-queues a failed job. "Cancel" stops a queued job and releases a running one at the end of its lease.
+- The job detail shows the payload, the rendered prompt, the lease, every attempt with its runner, session link and cost, the log of tool calls, the result and the error. "Retry" re-queues a failed job. "Cancel" stops a queued job and releases a running one at the end of its lease.
 - Leases in plain words: a runner holds a job for a limited time that each tool call extends. When the lease expires the job goes back to the queue, and a result that arrives afterwards is rejected. The server limits how many runners work at once, so an hourly run and a "Run now" cannot process the same job twice.
 - System tasks appear in the same list with their Trigger.dev status and a link to the run.
 
 ## Agent interface
 
-- One endpoint on the admin host, outside Basic Auth, authenticated by per-runner bearer tokens. It speaks the Model Context Protocol (MCP), so Claude Code, claude.ai and ChatGPT can use it.
+- One endpoint on the admin host, outside Basic Auth, authenticated by a bearer secret per runner. It speaks the Model Context Protocol (MCP), so Claude Code, claude.ai and ChatGPT can use it.
 - Tool groups:
   - **Jobs**: claim the next job, extend the lease, complete, fail. Claiming returns the job and its rendered instructions, and those instructions are the only ones a runner follows.
   - **Restaurants**: search by name, submit an import entry for resolution, read the context the job kind needs.
   - **Accolades**: add an unverified accolade to the claimed edition.
-  - **Draft**: write one field of the restaurant's draft each: canonical description, structured profile, menu, summary, article, poster brief; and the links.
+  - **Draft**: write one field of the restaurant's draft each: canonical description, structured profile, menu, summary, article, poster brief, links.
   - **Edition**: report counts and notes for the claimed import.
 - Guarantees:
   - Every write is validated against the shared schemas and scoped to the claimed job's target and kind. A profile job cannot write a menu or touch another restaurant.
@@ -147,21 +147,21 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - Cloudflare R2 for artwork and derivatives.
 - Trigger.dev for system tasks.
 - The Claude Code cloud scheduled task's fire endpoint for "Run now".
-- "Settings" shows whether each integration is configured and lists runner tokens for creation and revocation. It never displays secret values; configuration lives in the environment.
+- "Settings" shows whether each integration and each runner secret is configured. It never displays secret values; configuration lives in the environment.
 
 ## Milestones
 
-- **Factory, manual**: schema; awards, tiers and editions; restaurants with resolution; chains; accolades with references; every profile field manually editable; artwork upload; publishing with checklist; inbox basics.
-- **Agents, import**: tool endpoint and runner tokens; job queue with attempts and leases; edition import through the cloud task; manual mode; duplicates and merge.
-- **Agents, enrichment**: canonical description, profile, menu, summary, article, poster brief and links jobs; chaining; field locks and fill-empty; dashboard.
-- **Posters, automated**: Trigger.dev worker with OpenAI rendering, text check and derivatives in R2; batch actions.
+- **Factory, manual**: schema; awards, tiers and editions; restaurants with resolution; chains; accolades with references; every profile field manually editable; artwork upload; publishing with checklist.
+- **Agents, import**: tool endpoint and runner secrets; job queue with attempts and leases; edition import through the cloud task; manual mode; duplicates and merge.
+- **Agents, enrichment**: canonical description, profile, menu, summary, article, poster brief and links jobs; chaining; fill-empty; dashboard.
+- **Posters, automated**: Trigger.dev worker with OpenAI rendering and derivatives in R2; batch actions.
 - **Hardening**: periodic refresh from Places, local worker, usage reporting.
 - **Link resolvers**: Dianping first, then OpenRice and Apple Maps, each as its own step.
 
 ## Acceptance scenarios
 
 - Create the MICHELIN Guide award with its tiers, add the Hong Kong Macau 2026 edition and click "Import with agent". Within the next run every entry, Macau included, exists as a restaurant with an unverified accolade and a reference, the counts match the expected count, and "Mark verified" completes the import. Filtering the restaurant list to Hong Kong shows the ones to enrich first; Macau waits without a second import.
-- Select ten unenriched restaurants, click "Enrich" and leave. In the morning each has a draft with a canonical description, a structured profile, a menu where the restaurant publishes one, a summary, an article, a brief and poster variants, and the inbox lists what failed.
+- Select ten unenriched restaurants, click "Enrich" and leave. In the morning each has a draft with a canonical description, a structured profile, a menu where the restaurant publishes one, a summary, an article, a brief and poster variants, and the jobs page lists what failed.
 - A poster feels wrong: write "warmer light, show the counter, less crowded" and click "Regenerate artwork". A new round of variants appears; select the best one.
 - Add the award "We're Smart World" with a tier whose glyph key is unknown. It renders as the generic mark until a drawing is added to the registry; no code change is needed to use the award.
 - Import Asia's 50 Best 2025 after the Michelin import. A restaurant present in both ends up as one record with two accolades. A wrong match is found in the duplicates section and fixed by merging.
@@ -169,7 +169,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - Try to publish a restaurant without a selected poster. The checklist blocks it and names the missing item.
 - Import a Cantonese restaurant that carries a Chinese and an English official name: the Chinese name becomes canonical and the English name its translation. For an Italian restaurant the English name is canonical. Either choice can be swapped with "Make canonical".
 - Create a chain for a dim sum brand and attach its three branches. The restaurant list filters by chain, and the duplicates section stops proposing the branches as duplicates of each other.
-- Lock three profile fields and click "Regenerate". The locked fields are untouched and the empty ones are filled.
+- Clear two fields of a structured profile and click "Regenerate". The filled fields are untouched and the empty ones are filled.
 - Regenerate the summary of a published restaurant. The public apps still show the old one until the draft is published.
 
 ## Boundaries

@@ -14,8 +14,10 @@ The primary language is [TypeScript](https://www.typescriptlang.org/).
 
 ## Backend
 
-- [Next.js server actions](https://nextjs.org/docs/app/getting-started/updating-data) — the web apps call their own backend through server actions; there is no separate API server.
+- [Next.js server actions](https://nextjs.org/docs/app/getting-started/updating-data) — the web apps call their own backend through server actions; there is no separate API server. The admin's agent tool endpoint is the one route handler (see `nextjs-server-action.md`).
+- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) (`@modelcontextprotocol/server`) — the admin's tool endpoint for agents at `/api/mcp`, stateless with one JSON response per request.
 - Sessions — database-backed cookie sessions and email sign-in codes, implemented in `apps/app-next` (`docs/implementation/0001-web-session.md`).
+- Admin access — HTTP Basic Auth in `apps/admin-next/src/proxy.ts`, whose matcher skips `/api`; the tool endpoint checks a bearer secret per runner instead, both through `secureEquals` in `src/lib/crypto.ts`.
 - [Prisma](https://www.prisma.io/) — database ORM.
 - [PostgreSQL](https://www.postgresql.org/) — relational database.
 
@@ -28,10 +30,12 @@ The primary language is [TypeScript](https://www.typescriptlang.org/).
 - [React Hook Form](https://react-hook-form.com/) — form state and validation.
 - [Lingui](https://lingui.dev/) — internationalization (i18n).
 - [react-email](https://react.email/) — building email templates.
+- [server-only](https://www.npmjs.com/package/server-only) — keeps modules that read secrets, such as `apps/admin-next/src/lib/settings.ts`, out of client bundles.
 
 ## Tooling
 
 - [Task](https://taskfile.dev/) — defines and runs CLI tasks for common operations.
+- [Bun](https://bun.sh/) — runs `apps/cli-bun` through `task cli -- <command>`.
 - [pnpm](https://pnpm.io/) — monorepo package management, with a version catalog and supply-chain policies in `pnpm-workspace.yaml`.
 - [Turborepo](https://turborepo.dev/) — task orchestration and caching.
 - [antfu/eslint-config](https://eslint-config.antfu.me/) — linting and formatting, with the typescript-eslint type-aware rules, the React hooks and compiler diagnostics, and [jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y) for accessibility. Warnings fail the gate.

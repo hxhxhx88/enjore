@@ -22,5 +22,5 @@ Data flows **down**. You may import from packages _below_ you, but never _above_
 
 ## Forbidden patterns
 
-- ❌ No deep imports: if a directory has an `index` in it, can only import those exposed by the index.
+- ❌ No deep imports: code outside a directory that has an `index` imports only what the index exposes; files inside it, co-located tests included, import their siblings directly.
 - ❌ No app-to-app imports: `apps/*` cannot import code from other `apps/*`. Shared code must move to `packages/`.

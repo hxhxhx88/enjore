@@ -13,4 +13,5 @@ description: Use when modifying packages/db/prisma/schema.prisma — adding or c
 - Simple migration: run `task db:dev` to generate and apply.
 - Manual SQL (for example, a backfill): run `task db:new -- --name <name>`, hand-edit the generated migration file, then run `task db:dev`.
 - After the migration applies, run `task db:gen` to regenerate the Prisma client.
+- If the change adds a unique key that user input can violate, or a `Restrict` foreign key, add its message to `uniqueKeys` or `restrictedForeignKeys` in `apps/admin-next/src/lib/db-error.ts`, with a test case.
 - Verify with `task check` before handing back.

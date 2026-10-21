@@ -6,7 +6,7 @@ export default function Page(): JSX.Element {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Whether each integration and runner secret is configured. Values are never shown; configuration lives in the environment.
+        The integrations and runner secrets this deployment carries, with the variables behind each. Values are never shown; configuration lives in the environment.
       </p>
       <TableSettings rows={readSettings()} />
     </div>

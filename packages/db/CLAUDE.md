@@ -28,6 +28,7 @@ Even if a group is empty, keep the separation. See the reference layout in `docs
 - Simple change: run `task db:dev` to generate and apply the migration.
 - Needs manual SQL (for example, a backfill): run `task db:new -- --name <name>` first, hand-edit the generated migration, then run `task db:dev`.
 - After the migration applies, run `task db:gen` to regenerate the Prisma client.
+- If the change adds a unique key that user input can violate, or a `Restrict` foreign key, add its message to `uniqueKeys` or `restrictedForeignKeys` in `apps/admin-next/src/lib/db-error.ts`.
 
 ## Deep reading
 

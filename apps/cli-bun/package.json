@@ -5,6 +5,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@t3-oss/env-core": "catalog:",
     "commander": "catalog:",
     "zod": "catalog:"
   },

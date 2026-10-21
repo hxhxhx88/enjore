@@ -28,7 +28,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 
 - **"Dashboard"** at `/`: counts of restaurants by publication state, restaurants missing each profile field, jobs queued, running and failed, editions awaiting verification, the last agent run with its link, recent activity.
 - **"Restaurants"** at `/restaurants`: list, search, filters by region, chain, publication state, award, missing profile field, pending draft and business status, and batch actions, with the detail at `/restaurants/[id]`. A restaurant with a draft waiting, or a published one whose business status turned closed, carries a badge in the list.
-- **"Awards"** at `/awards`: awards with their tiers and editions, with the edition detail at `/awards/[id]/editions/[editionId]`, where unresolved entries and unverified accolades wait for the operator.
+- **"Awards"** at `/awards`: awards with their tiers and editions, with the edition detail at `/awards/[id]/editions/[edition-id]`, where unresolved entries and unverified accolades wait for the operator.
 - **"Jobs"** at `/jobs`: the queue, with failed jobs flagged, and the job detail at `/jobs/[id]`.
 - **"Settings"** at `/settings`: configuration status of integrations and runner secrets.
 - There is no inbox: whatever waits for the operator is flagged on the list where it lives.

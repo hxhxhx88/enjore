@@ -1,13 +1,8 @@
 import type { NextRequest } from 'next/server'
 import { Buffer } from 'node:buffer'
-import { createHash, timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
+import { secureEquals } from '@/lib/crypto'
 import { env } from '@/lib/env'
-
-// Compare hashes so the comparison runs in constant time regardless of input length.
-function secureEquals(a: string, b: string): boolean {
-  return timingSafeEqual(createHash('sha256').update(a).digest(), createHash('sha256').update(b).digest())
-}
 
 export function proxy(request: NextRequest): NextResponse {
   const authHeader = request.headers.get('authorization')

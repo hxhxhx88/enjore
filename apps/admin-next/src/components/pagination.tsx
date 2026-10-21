@@ -25,7 +25,7 @@ export function Pagination({ currentPage, totalPages }: Props): JSX.Element {
             </Button>
           )}
       <div className="flex items-center gap-1">
-        {`${currentPage} of ${totalPages}`}
+        {`${currentPage} of ${Math.max(1, totalPages)}`}
       </div>
       {currentPage < totalPages
         ? (

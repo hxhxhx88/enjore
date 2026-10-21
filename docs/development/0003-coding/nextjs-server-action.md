@@ -32,3 +32,7 @@ See `examples/web/src/server-action` for detailed examples and explanations.
 - Define the server-side file `action-*.ts` and implement the server action.
 - Define the client-side component `[component]-*.tsx` and implement the UI logic.
 - Use `useMutation` to wrap the server action call in the client component.
+
+## Exceptions
+
+- `apps/admin-next/src/app/api/mcp/route.ts` is the admin's only route handler. MCP clients speak JSON-RPC over HTTP and cannot call server actions, so the agents' tool endpoint is a route handler. It sits outside Basic Auth because the proxy matcher skips `/api`, and authenticates every request with a bearer secret per runner in `src/lib/mcp/auth.ts`. Record any further route handler here.

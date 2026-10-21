@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "admin": {
+      "type": "http",
+      "url": "${ADMIN_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${RUNNER_SECRET_CLOUD_TASK}"
+      }
+    }
+  }
+}

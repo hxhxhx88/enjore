@@ -146,6 +146,7 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - The OpenAI image API for artwork, at the highest quality settings and native 16:9.
 - Cloudflare R2 for artwork, served through a Cloudflare domain whose image transformations deliver the sizes the apps need.
 - Trigger.dev for system tasks.
+- The claude.ai custom connector that carries the tool endpoint's URL and bearer secret, which is how Claude reaches the endpoint from chats, scheduled tasks and Claude Code sessions.
 - The Claude Code cloud scheduled task's fire endpoint for "Run now".
 - "Settings" shows whether each integration and each runner secret is configured. It never displays secret values; configuration lives in the environment.
 

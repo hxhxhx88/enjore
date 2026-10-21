@@ -14,7 +14,7 @@ The eighth milestone, planned at module level. The refresh from Places runs on a
 ## Design
 
 - Periodic refresh: the admin has three entry points, page renders, server actions and the endpoint, and nobody enqueues refresh jobs on a timer. Two designs fit the codebase and this milestone picks one. The first is a new tool value, callable by the Trigger.dev runner only, that enqueues one `refresh-google-places` job per restaurant whose `googlePlacesRefreshedAt` is older than the threshold, after which the same scheduled run drains them through `claim-job`, the Places client and `complete-job`, with a completion handler that applies the facts under the origin rules. The second is a cron route on the admin, which is a second route-handler exception. Until the decision lands, the stale-basics filter from 0002 and a batch "Refresh from Places" from the list cover the need.
-- Local worker: `apps/cli-bun/src/actions/worker/` loops headless Claude Code with `.mcp.json` and `RUNNER_SECRET_LOCAL_WORKER`, following the generic runner prompt, and stops when the session reports an empty queue or after a configured number of cycles. The jobs page shows `local-worker` as the runner of its attempts.
+- Local worker: `apps/cli-bun/src/actions/worker/` loops headless Claude Code, following the generic runner prompt, and stops when the session reports an empty queue or after a configured number of cycles. It reaches the endpoint either through the claude.ai connector, which is available in the terminal and makes its attempts `claude` runs, or through a project `.mcp.json` re-added with `RUNNER_SECRET_LOCAL_WORKER` when a separate `local-worker` identity on the jobs page is wanted; this milestone decides.
 - Usage reporting: the dashboard gains cost per period from `costUsd`, jobs per runner, the failure rate, and a card for published restaurants whose business status turned closed; "Settings" shows when the cloud task last ran.
 - Orphan cleanup: a command in `apps/cli-bun` lists the objects in R2 without a `PosterArtwork` row and removes them after confirmation.
 
@@ -25,7 +25,7 @@ The eighth milestone, planned at module level. The refresh from Places runs on a
 
 ## Done when
 
-- The local worker drains a queue with runner `local-worker` and its attempts show on the jobs page.
+- The local worker drains a queue and its attempts show on the jobs page under the runner identity this milestone chose.
 - Refresh runs on its schedule, or the batch action is documented as the v1 answer.
 - The dashboard shows last month's cost and the failure rate.
 

@@ -6,7 +6,7 @@ This folder plans the implementation of the admin web in `apps/admin-next`. The 
 
 | Doc                                    | PRD milestone      | Delivers                                                                                                                                                                                      | Depends on           | Status      |
 | -------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------- |
-| `0001-shell-and-awards.md`             | Factory, manual    | Users pages removed; shell, routes and the patterns later milestones copy; "Settings" and "Dashboard" skeletons; awards, tiers with the marks registry, editions; seeds; the cloud-task spike | none                 | In progress |
+| `0001-shell-and-awards.md`             | Factory, manual    | Users pages removed; shell, routes and the patterns later milestones copy; "Settings" and "Dashboard" skeletons; awards, tiers with the marks registry, editions; seeds; the cloud-task spike | none                 | Done        |
 | `0002-restaurants-and-resolution.md`   | Factory, manual    | Google Places client; resolver; "Add restaurant"; chains; basics with origins and "Refresh from Places"; name translations with "Make canonical"; list with search and filters; delete        | 0001                 | Not started |
 | `0003-accolades-and-editions.md`       | Factory, manual    | Accolades; the edition page; "Paste a list"; unresolved entries; "Mark verified"; duplicates and merge                                                                                        | 0002                 | Not started |
 | `0004-profile-and-publishing.md`       | Factory, manual    | Draft and published editors; poster upload with crop and selection; object storage; checklist; publish, discard, withdraw                                                                     | 0003                 | Not started |
@@ -21,7 +21,7 @@ This folder plans the implementation of the admin web in `apps/admin-next`. The 
 - The PRD's six milestones remain the contract. "Factory, manual" is split in four shippable slices because it is most of the user interface, and "duplicates and merge" moves into it because pasted lists already create duplicates.
 - Manual before automatic: the resolver is built for "Add restaurant" (0002), reused by "Paste a list" (0003) and by the agent's tool (0005); every profile field is editable by hand (0004) before any job writes it (0006).
 - The queue is proven by manual mode and the import job (0005) before the seven enrichment kinds (0006). Posters are uploadable from 0004, so rendering (0007) comes last among the agent milestones.
-- The path from a Claude Code cloud routine to the admin's tool endpoint is the largest external unknown, so 0001 spikes it before anything is built on it.
+- The path from Claude to the admin's tool endpoint was the largest external unknown, so 0001 spiked it before anything was built on it. A Claude Code cloud routine reading a committed `.mcp.json` worked on 2026-10-21, and the same day the connection moved to a claude.ai custom connector, which needs no clone and serves chats, scheduled tasks and Claude Code alike.
 - Each milestone ends deployed, with the acceptance scenarios it claims run against real data.
 
 ## How to run a milestone
@@ -60,6 +60,7 @@ This folder plans the implementation of the admin web in `apps/admin-next`. The 
 
 ## Open questions
 
+- Carrier of the admin's MCP server: decided on 2026-10-21 for the claude.ai custom connector with the bearer secret as a fixed request header, a beta the owner's account has. The runner is `claude` with `RUNNER_SECRET_CLAUDE`, `.mcp.json` is gone, and 0008 re-adds a project server only if the local worker needs its own identity. Should the header beta be withdrawn, the fallback is an OAuth server in the admin, as claude.com's "Authentication for connectors" page describes.
 - "Run now": the fire endpoint's URL, authentication and per-hour cap are confirmed in 0005; the button stays disabled while its variables are unset.
 - Periodic refresh: 0008 chooses between a new tool value for a Trigger.dev schedule and a cron route; a stale-basics filter and a batch refresh cover the gap until then.
 - Image size: the PRD asks for native 16:9; 0007 renders the largest landscape size the model offers and crops when needed.

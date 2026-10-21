@@ -35,4 +35,4 @@ See `examples/web/src/server-action` for detailed examples and explanations.
 
 ## Exceptions
 
-- `apps/admin-next/src/app/api/mcp/route.ts` is the admin's only route handler. MCP clients speak JSON-RPC over HTTP and cannot call server actions, so the agents' tool endpoint is a route handler. It sits outside Basic Auth because the proxy matcher skips `/api`, and authenticates every request with a bearer secret per runner in `src/lib/mcp/auth.ts`. Record any further route handler here.
+- `apps/admin-next/src/app/api/mcp/route.ts` is the admin's only route handler. MCP clients speak JSON-RPC over HTTP and cannot call server actions, so the agents' tool endpoint is a route handler. It sits outside Basic Auth because the proxy matcher skips `/api`, and authenticates every request with a bearer secret per runner in `src/lib/mcp/auth.ts`. Its clients are Claude, through the claude.ai custom connector, and Claude Code. Record any further route handler here.

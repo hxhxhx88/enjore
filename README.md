@@ -1,10 +1,8 @@
-# Restaurants
+# Enjore
 
-The admin, the agent pipeline and the public apps of a restaurant guide; see `docs/product/0000-project-overview.md` for what it is and `docs/implementation/admin/index.md` for where the build stands. The repository started from a starter template, and these template steps are still open:
+The admin, the agent pipeline and the public apps of Enjore, a curated guide to notable restaurants in Hong Kong; see `docs/product/0000-project-overview.md` for what it is and `docs/implementation/admin/index.md` for where the build stands. The repository started from a starter template, and one template step is still open:
 
-- Search for `Starter Template` in `apps/app-next` and `packages/email` and replace it with the product name.
 - Replace the placeholder logos in `packages/ui-web/src/app-logo.tsx` and `packages/email/src/components/email-logo.tsx`.
-- Adjust the theme tokens in `configs/ui/global.css` and mirror them in `configs/ui/colors.ts` (`task check` verifies they match).
 
 ## Prerequisites
 

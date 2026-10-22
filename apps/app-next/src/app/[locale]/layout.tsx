@@ -39,8 +39,8 @@ export async function generateMetadata({ params }: Pick<LayoutProps<'/[locale]'>
 
   return {
     metadataBase: new URL(env.APP_ORIGIN),
-    title: { default: 'Starter Template', template: '%s · Starter Template' },
-    description: i18n._(msg`A starter template for web applications.`),
+    title: { default: 'Enjore', template: '%s · Enjore' },
+    description: i18n._(msg`A curated guide to notable restaurants in Hong Kong.`),
   }
 }
 

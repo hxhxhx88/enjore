@@ -8,7 +8,7 @@ To install a web UI primitive, run:
 task ui:web -- [name]
 ```
 
-where `name` is the name of a [shadcn component](https://ui.shadcn.com/docs/components). The task uses the shadcn CLI version pinned in `packages/ui-web`, so the generated code matches the installed registry style (`base-vega`, Base UI primitives). After installing, replace any `rem` unit with `--app-size` math; `task check` rejects `rem` in primitives.
+where `name` is the name of a [shadcn component](https://ui.shadcn.com/docs/components). The task uses the shadcn CLI version pinned in `packages/ui-web`, so the generated code matches the installed registry style (`base-vega`, Base UI primitives). After installing, replace any `rem` unit with `--app-size` math; `task check` rejects `rem` in primitives. Also remove any radius that bypasses the tokens, such as `rounded-full` or `rounded-[4px]`: the design language is square, and `task check` rejects those too. Shadows need no edit; the theme neutralizes `shadow-xs` and `shadow-sm`.
 
 ## General installation
 

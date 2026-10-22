@@ -72,7 +72,7 @@ export async function actionSendCode(input: Input): Promise<Output> {
     const { sendEmail } = await import('@repo/email/lib/send')
 
     await sendEmail({
-      fromName: 'Starter Template',
+      fromName: 'Enjore',
       to: email,
       subject: i18n._(msg`${code} is your sign-in code`),
       element: emailUserSignIn({

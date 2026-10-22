@@ -1,11 +1,11 @@
-# Restaurants — Claude Code guide
+# Enjore — Claude Code guide
 
 This file orients Claude in this repo. Keep it lean. Deep content lives in `docs/` — read it first.
 
 ## What this repo is
 
 - pnpm + Turborepo monorepo, TypeScript. Node.js version pinned in `.nvmrc`, pnpm version in `package.json` (`packageManager`).
-- Apps: `apps/app-next` (public web with email sign-in), `apps/admin-next` (admin web behind Basic Auth: dashboard, awards, settings, and the agents' MCP tool endpoint at `/api/mcp`), `apps/cli-bun` (developer commands run with `task cli -- <command>`, such as `seed-awards`).
+- Apps: `apps/app-next` (public web with email sign-in), `apps/admin-next` (admin web behind Basic Auth: dashboard, awards, and the agents' MCP tool endpoint at `/api/mcp`), `apps/cli-bun` (developer commands run with `task cli -- <command>`, such as `seed-awards`).
 - Packages: `@repo/db`, `@repo/email`, `@repo/i18n`, `@repo/lib`, `@repo/ui-web`.
 - Configs: `@repo/ts-config`, `@repo/ui-config`.
 - `task` CLI (`taskfile.yaml`, `tasks/*.yaml`) wraps commands and auto-loads `.env.local`.
@@ -28,7 +28,7 @@ This file orients Claude in this repo. Keep it lean. Deep content lives in `docs
 - Always prefer `task ...` over raw `pnpm ...` so `.env.local` loads automatically.
 - List all tasks: `task --list-all`.
 - Dev loop: `task dev` (all workspaces) or `task dev -- --filter=app-next` (scoped).
-- Quality gate: `task check` (typecheck, tests, i18n completeness, UI rem guard, colors sync, lint with type-aware rules and zero warnings allowed, knip).
+- Quality gate: `task check` (typecheck, tests, i18n completeness, UI rem and radius guards, colors sync, lint with type-aware rules and zero warnings allowed, knip).
 - Fix lint and formatting: `task fix`. Unit tests alone: `task test`.
 - Full build gate: `task build` (runs check first).
 - Raw pnpm: `task pnpm -- ...`.
@@ -50,7 +50,7 @@ This file orients Claude in this repo. Keep it lean. Deep content lives in `docs
 - Web UI primitives: `packages/ui-web/src/primitives/` (shadcn on Base UI; imported through subpaths such as `@repo/ui-web/primitives/button`).
 - Marks registry: `packages/ui-web/src/mark.tsx` (`Mark`) and `mark-accolade.tsx` (`MarkAccolade`), with the glyph keys in `packages/ui-web/src/lib/glyphs.ts`; imported as `@repo/ui-web/mark` and `@repo/ui-web/mark-accolade`. An unknown glyph key renders the generic mark.
 - Agent tool endpoint: `apps/admin-next/src/app/api/mcp/route.ts` (`POST` only; bearer secret checked by `src/lib/mcp/auth.ts`), tools registered in `src/lib/mcp/server.ts` on `@modelcontextprotocol/server`, tool names fixed in `packages/lib/src/schemas/job-tool.ts`. Claude reaches it through a claude.ai custom connector that sends `RUNNER_SECRET_CLAUDE`; setup in `docs/deployment/0004-claude-connector.md`. There is no `.mcp.json`.
-- Admin helpers: `parseDatabaseError` in `apps/admin-next/src/lib/db-error.ts` turns unique and `Restrict` violations into messages; `readSettings()` in `src/lib/settings.ts` is the Settings inventory; `src/lib/labels.ts` holds vocabulary labels; `src/lib/derive-*.ts` compute state instead of storing it.
+- Admin helpers: `parseDatabaseError` in `apps/admin-next/src/lib/db-error.ts` turns unique and `Restrict` violations into messages; `src/lib/labels.ts` holds vocabulary labels; `src/lib/derive-*.ts` compute state instead of storing it.
 - Styling tokens: `configs/ui/global.css` and `configs/ui/colors.ts` — `task check` fails when they drift.
 - Dependency versions: `pnpm-workspace.yaml` (`catalog:`); manifests only reference the catalog.
 

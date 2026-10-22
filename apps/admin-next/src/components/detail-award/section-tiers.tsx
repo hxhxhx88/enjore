@@ -25,7 +25,7 @@ export function SectionTiers(): JSX.Element {
           Add tier
         </Button>
       </div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden border">
         <Table>
           <TableHeader>
             <TableRow>

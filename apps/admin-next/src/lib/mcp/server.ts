@@ -11,9 +11,9 @@ const claimJob: JobTool = 'claim-job'
 // The factory runs once per request, so nothing is shared between requests and nothing survives a Vercel invocation.
 const handler = createMcpHandler(() => {
   const server = new McpServer(
-    { name: 'restaurants-admin', version: '0.0.0' },
+    { name: 'enjore-admin', version: '0.0.0' },
     {
-      instructions: 'Tool endpoint of the restaurants admin. Call claim-job to receive work; { "job": null } means the queue is empty and the run is over.',
+      instructions: 'Tool endpoint of the Enjore admin. Call claim-job to receive work; { "job": null } means the queue is empty and the run is over.',
     },
   )
 

@@ -16,11 +16,11 @@ msgstr ""
 msgid "{code} is your sign-in code"
 msgstr "{code} 是你的登录验证码"
 
+msgid "A curated guide to notable restaurants in Hong Kong."
+msgstr "香港知名餐厅精选指南。"
+
 msgid "A new code has been sent."
 msgstr "新的验证码已发送。"
-
-msgid "A starter template for web applications."
-msgstr "一个用于 Web 应用的起步模板。"
 
 msgid "Account"
 msgstr "账户"

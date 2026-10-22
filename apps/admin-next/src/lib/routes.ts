@@ -10,5 +10,4 @@ export const routes = {
     edition: (awardId: string, editionId: string): Route<`/awards/${string}/editions/${string}`> =>
       `/awards/${awardId}/editions/${editionId}`,
   },
-  settings: '/settings',
 } as const

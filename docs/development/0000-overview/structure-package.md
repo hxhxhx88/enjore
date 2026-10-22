@@ -32,4 +32,4 @@ apps/*-next
 - `src/app/api/mcp/route.ts` is the only route handler; its modules live in `src/lib/mcp/`.
 - `src/lib/routes.ts` gains a route once its page exists; typed routes reject a link to a page that does not.
 - `src/lib/derive-*.ts` compute state instead of storing it, such as `derive-import-status.ts`.
-- `src/lib/labels.ts` holds the plain English labels of vocabularies, and `src/lib/settings.ts` the Settings inventory.
+- `src/lib/labels.ts` holds the plain English labels of vocabularies.

@@ -7,7 +7,6 @@ export function CodeDisplay({ code }: { code: string }): JSX.Element {
       style={{
         backgroundColor: colors.primary,
         color: colors.primaryForeground,
-        borderRadius: '3px',
         fontWeight: '600',
         fontSize: '24px',
         textAlign: 'center',

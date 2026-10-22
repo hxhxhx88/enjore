@@ -28,7 +28,7 @@ export function SectionEditions(): JSX.Element {
           Add edition
         </Button>
       </div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden border">
         <Table>
           <TableHeader>
             <TableRow>

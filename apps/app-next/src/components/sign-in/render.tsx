@@ -11,7 +11,7 @@ export function Render(): JSX.Element {
   const email = useStore(s => s.email)
 
   return (
-    <div className="w-full max-w-sm space-y-6 rounded-xl border bg-card p-6 shadow-sm">
+    <div className="w-full max-w-sm space-y-6 border bg-card p-6">
       <div className="flex flex-col items-center gap-2 text-center">
         <AppLogo size={48} />
         <h1 className="text-xl font-semibold">

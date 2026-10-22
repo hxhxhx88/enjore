@@ -15,7 +15,7 @@ export default async function Page({ params }: PageProps<'/awards/[id]/editions/
 
   return (
     <DetailEditionProvider edition={edition}>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         <HeaderEdition />
       </div>
     </DetailEditionProvider>

@@ -30,7 +30,6 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - **"Restaurants"** at `/restaurants`: list, search, filters by region, chain, publication state, award, missing profile field, pending draft and business status, and batch actions, with the detail at `/restaurants/[id]`. A restaurant with a draft waiting, or a published one whose business status turned closed, carries a badge in the list.
 - **"Awards"** at `/awards`: the awards, searchable by name, short name or slug and filtered by active state, with their facets and tier and edition counts. The award detail at `/awards/[id]` shows its fields, its tiers with their marks and its editions with their import status. The edition detail at `/awards/[id]/editions/[edition-id]` shows the edition and is where unresolved entries and unverified accolades wait for the operator.
 - **"Jobs"** at `/jobs`: the queue, with failed jobs flagged, and the job detail at `/jobs/[id]`.
-- **"Settings"** at `/settings`: the integrations and runner secrets the deployment carries, each with its environment variables and whether they are set.
 - There is no inbox: whatever waits for the operator is flagged on the list where it lives.
 - The template's "Users" pages are removed.
 
@@ -148,11 +147,10 @@ The admin web is the factory: where awards are defined, restaurants imported, pr
 - Trigger.dev for system tasks.
 - The claude.ai custom connector that carries the tool endpoint's URL and bearer secret, which is how Claude reaches the endpoint from chats, scheduled tasks and Claude Code sessions.
 - The Claude Code cloud scheduled task's fire endpoint for "Run now".
-- "Settings" lists each integration and runner secret with the environment variables behind it and whether they are set: at first the database, Basic Auth and the Claude connector secret, with a row added by each integration as it lands. Every variable listed is required at boot, so the page is an inventory of what the deployment carries rather than a report of gaps. It never displays secret values; configuration lives in the environment.
 
 ## Milestones
 
-- **Factory, manual**: schema; awards, tiers and editions, with the launch awards seeded; the "Dashboard" and "Settings" skeletons; restaurants with resolution; chains; accolades with references; every profile field manually editable; artwork upload; publishing with checklist; duplicates and merge.
+- **Factory, manual**: schema; awards, tiers and editions, with the launch awards seeded; the "Dashboard" skeleton; restaurants with resolution; chains; accolades with references; every profile field manually editable; artwork upload; publishing with checklist; duplicates and merge.
 - **Agents, import**: tool endpoint and runner secrets; job queue with attempts and leases; edition import through the cloud task; manual mode.
 - **Agents, enrichment**: canonical description, profile, menu, summary, article, poster brief and links jobs; chaining; fill-empty; the complete dashboard.
 - **Posters, automated**: Trigger.dev worker with OpenAI rendering into R2; batch actions.

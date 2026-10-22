@@ -16,11 +16,11 @@ msgstr ""
 msgid "{code} is your sign-in code"
 msgstr "{code} is your sign-in code"
 
+msgid "A curated guide to notable restaurants in Hong Kong."
+msgstr "A curated guide to notable restaurants in Hong Kong."
+
 msgid "A new code has been sent."
 msgstr "A new code has been sent."
-
-msgid "A starter template for web applications."
-msgstr "A starter template for web applications."
 
 msgid "Account"
 msgstr "Account"

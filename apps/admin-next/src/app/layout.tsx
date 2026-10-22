@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Restaurants admin',
+  title: 'Enjore admin',
   // The admin panel must never be indexed.
   robots: { index: false, follow: false },
 }

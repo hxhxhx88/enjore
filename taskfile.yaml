@@ -20,7 +20,7 @@ tasks:
   typegen:
     desc: Generate TypeScript types
     cmds:
-      - pnpm typegen {{ .CLI_ARGS }}
+      - pnpm typegen --force {{ .CLI_ARGS }}
 
   typecheck:
     desc: Run TypeScript type checking
@@ -62,6 +62,8 @@ tasks:
     preconditions:
       - sh: grep "[[:digit:]]rem" packages/ui-web/src/primitives/*.tsx && exit 1 || exit 0
         msg: some web UI primitives are using rem units
+      - sh: grep -E "rounded-full|rounded-\[[[:digit:]]" packages/ui-web/src/primitives/*.tsx && exit 1 || exit 0
+        msg: some web UI primitives bypass the radius tokens (the design language is square)
       - sh: |
           for file in packages/i18n/locales/*/*.po; do
             if sed '1,2d' "$file" | grep -q 'msgstr ""'; then

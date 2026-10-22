@@ -1,3 +1,14 @@
 @import '@repo/ui-web/global.css';
 
 @source "..";
+
+/* The admin is denser than the public surfaces: a 15px scale instead of 18px, and unstyled text at `text-sm`. */
+:root {
+  --app-size: 15px;
+}
+
+@layer base {
+  body {
+    @apply text-sm;
+  }
+}

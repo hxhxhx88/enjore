@@ -14,7 +14,7 @@ The second milestone of the admin in `apps/admin-next`. Restaurants are created 
 
 ## Design
 
-- Places client `src/lib/places/client.ts` calls the Places API (New): text search with a location bias on the region, and place details with a field mask limited to id, display name, formatted address, address components, location, phone, website, regular opening hours and business status. Responses are parsed with a new `packages/lib/src/schemas/google-places.ts`. The keys are `GOOGLE_PLACES_API_KEY` and the client variable `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`, added to `client` in `src/lib/env.ts`; `src/lib/settings.ts` gains the row "Google Places" with both.
+- Places client `src/lib/places/client.ts` calls the Places API (New): text search with a location bias on the region, and place details with a field mask limited to id, display name, formatted address, address components, location, phone, website, regular opening hours and business status. Responses are parsed with a new `packages/lib/src/schemas/google-places.ts`. The keys are `GOOGLE_PLACES_API_KEY` and the client variable `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`, added to `client` in `src/lib/env.ts`.
 - Fact mapping `src/lib/places/map-facts.ts` turns a place into the seven facts: business status (`OPERATIONAL` to `open`, `CLOSED_TEMPORARILY` to `temporarily-closed`, `CLOSED_PERMANENTLY` to `permanently-closed`), opening hours normalized to `packages/lib/src/schemas/opening-hours.ts` including periods that close after midnight, district from the neighborhood or sublocality component, region from the country component. Fixtures for Hong Kong, Macau and a Japanese address drive the tests.
 - Resolver: orchestration in `src/lib/resolver/resolve-entry.ts`, `candidates.ts` and `apply-resolution.ts`; pure helpers with tests in `src/lib/resolver/normalize.ts` (NFKC, lowercase, punctuation and spaces stripped, CJK kept), `similarity.ts` (the Dice coefficient over character bigrams, taken as the maximum over the entry's names and the restaurant's canonical and translated names; token Dice for addresses after removing "Hong Kong" and "香港"), `distance.ts` (haversine), `maps-url.ts` (name and coordinates from a Google Maps URL, short links followed server-side) and `decide.ts` (the decision table).
 - Match order, as the PRD states: a `SourceReference` with the same award and normalized listing URL is a match. Otherwise a Places text search of the name and address, biased to the region, where a Maps link contributes its name and coordinates; the top result is trusted when name similarity is at least 0.8, or at least 0.5 together with address similarity of at least 0.5; a restaurant that owns that place id is a match. Otherwise the candidates are the restaurants of the region within 300 metres, or with name similarity of at least 0.6 when there are no coordinates, ranked and shaped as `importCandidateSchema` in `packages/lib/src/schemas/import-entry.ts`.
@@ -38,7 +38,7 @@ The second milestone of the admin in `apps/admin-next`. Restaurants are created 
 - Build "Add restaurant" with its resolve and create actions.
 - Build the detail page, the "Basics" section with per-fact edit and clear, the map preview, "Refresh from Places", the chain picker and "Edit chain".
 - Build the translations editor and "Make canonical"; mount it for the restaurant and chain names.
-- Add "Delete" to the header menu; add the restaurant cards to the dashboard; add the Settings row.
+- Add "Delete" to the header menu; add the restaurant cards to the dashboard.
 
 ## Done when
 

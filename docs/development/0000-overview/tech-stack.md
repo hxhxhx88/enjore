@@ -30,7 +30,7 @@ The primary language is [TypeScript](https://www.typescriptlang.org/).
 - [React Hook Form](https://react-hook-form.com/) — form state and validation.
 - [Lingui](https://lingui.dev/) — internationalization (i18n).
 - [react-email](https://react.email/) — building email templates.
-- [server-only](https://www.npmjs.com/package/server-only) — keeps modules that read secrets, such as `apps/admin-next/src/lib/settings.ts`, out of client bundles.
+- [server-only](https://www.npmjs.com/package/server-only) — keeps modules that read secrets, such as `apps/app-next/src/lib/session.ts`, out of client bundles.
 
 ## Tooling
 

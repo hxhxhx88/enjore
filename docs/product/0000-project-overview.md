@@ -1,6 +1,6 @@
 # Project overview
 
-This document describes the whole product: a curated guide to notable restaurants in Hong Kong for new Hongkongers from mainland China, built from professional sources and presented through AI-crafted profiles and original posters. It is the context for every other product document. The admin web, the first thing we build, is specified in `docs/product/0001-admin-web.md`. The public web and the mobile app get their own documents when their turn comes. Technical rules for the data pipeline will live in `docs/implementation/0003-enrichment-pipeline.md`.
+This document describes the whole product, Enjore: a curated guide to notable restaurants in Hong Kong for new Hongkongers from mainland China, built from professional sources and presented through AI-crafted profiles and original posters. It is the context for every other product document. The admin web, the first thing we build, is specified in `docs/product/0001-admin-web.md`. The public web and the mobile app get their own documents when their turn comes. Technical rules for the data pipeline will live in `docs/implementation/0003-enrichment-pipeline.md`.
 
 ## Overview
 

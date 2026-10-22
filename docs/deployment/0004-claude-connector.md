@@ -6,7 +6,7 @@ The admin's tool endpoint, `/api/mcp` on the admin host, speaks the Model Contex
 
 - Generate the secret with `openssl rand -base64 32`, set it as `RUNNER_SECRET_CLAUDE` in the admin's Vercel project and deploy. The admin does not start without it.
 - Check the endpoint from a public network: `curl -sI https://<admin host>/api/mcp` answers 405, because only `POST` exists, and must not answer with a redirect, because a redirect to another host drops the `Authorization` header; a `POST` without a token answers 401 with `WWW-Authenticate: Bearer`.
-- In claude.ai go to **Customize > Connectors** and click **Add custom connector**. Name it "Restaurants admin", enter `https://<admin host>/api/mcp` as the MCP server URL and continue.
+- In claude.ai go to **Customize > Connectors** and click **Add custom connector**. Name it "Enjore admin", enter `https://<admin host>/api/mcp` as the MCP server URL and continue.
 - Under **Authentication** choose **No sign-in**. The detection step may say the server requires sign-in, because its unauthenticated probe gets 401; choose **No sign-in** anyway.
 - Under **Request headers** add the header `authorization` with the value `Bearer <RUNNER_SECRET_CLAUDE>`: one space after `Bearer` and nothing after the secret, since any other shape gets 401. Mark it **Required** and click **Add**.
 - The connector shows **Connected** under **Your connectors**, and its page lists the endpoint's tools under **Tool permissions**.
@@ -36,7 +36,7 @@ The admin's tool endpoint, `/api/mcp` on the admin host, speaks the Model Contex
 ## "Run now"
 
 - The admin's "Run now" button, delivered by milestone 0005, fires the scheduled task through its API trigger: `POST https://api.anthropic.com/v1/claude_code/routines/<task id>/fire` with the task's own bearer token and the headers `anthropic-beta: experimental-cc-routine-2026-04-01` and `anthropic-version: 2023-06-01`. The response carries the session URL. Each task allows 30 fires per hour.
-- The task's fire URL and token go into the admin's environment as `CLOUD_TASK_TRIGGER_URL` and `CLOUD_TASK_TRIGGER_SECRET`, mandatory from milestone 0005 like every other variable, and "Settings" gains their rows; the token is shown once when generated in the task's edit dialog.
+- The task's fire URL and token go into the admin's environment as `CLOUD_TASK_TRIGGER_URL` and `CLOUD_TASK_TRIGGER_SECRET`, mandatory from milestone 0005 like every other variable; the token is shown once when generated in the task's edit dialog.
 
 ## Verify a run
 

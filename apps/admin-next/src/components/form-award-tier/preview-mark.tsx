@@ -11,7 +11,7 @@ export function PreviewMark(): JSX.Element {
   const unknown = glyphKey !== '' && !isGlyphKey(glyphKey)
 
   return (
-    <div className="flex items-center gap-3 rounded-md border px-3 py-2">
+    <div className="flex items-center gap-3 border px-3 py-2">
       <span className="text-sm text-muted-foreground">Preview</span>
       <Mark glyphKey={glyphKey === '' ? 'generic' : glyphKey} count={glyphCount} className="text-2xl" />
       {unknown && <span className="text-xs text-muted-foreground">No drawing for this key yet; the generic mark is shown.</span>}

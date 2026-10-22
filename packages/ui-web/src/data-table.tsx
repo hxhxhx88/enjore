@@ -47,7 +47,7 @@ export function DataTable<Data extends RowData>({
   const rows = table.getRowModel().rows
 
   return (
-    <div className={cn('overflow-hidden rounded-md border', className)}>
+    <div className={cn('overflow-hidden border', className)}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map(headerGroup => (

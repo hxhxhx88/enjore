@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseDatabaseError } from '@/lib/db-error'
+import { parseDatabaseError, violatesUniqueKey } from '@/lib/db-error'
 
 // The shape `PrismaClientKnownRequestError` has at runtime with a driver adapter: `meta` carries the adapter's error.
 function prismaError(modelName: string | undefined, cause: Record<string, unknown>): unknown {
@@ -21,7 +21,7 @@ function foreignKeyViolation(modelName: string, constraint: Record<string, unkno
 
 describe('parseDatabaseError', () => {
   it('names the known unique keys by their columns', () => {
-    expect(parseDatabaseError(uniqueViolation('Award', ['slug']))).toEqual({ kind: 'unique', message: 'Slug already in use.' })
+    expect(parseDatabaseError(uniqueViolation('Award', ['slug']))).toEqual({ kind: 'unique', columns: ['slug'], message: 'Slug already in use.' })
     expect(parseDatabaseError(uniqueViolation('AwardTier', ['award_id', 'name']))?.message).toBe('A tier with this name already exists in this award.')
     expect(parseDatabaseError(uniqueViolation('AwardEdition', ['award_id', 'label']))?.message).toBe('An edition with this label already exists in this award.')
     expect(parseDatabaseError(uniqueViolation('Accolade', ['restaurant_id', 'edition_id', 'tier_id']))?.message).toBe('This restaurant already holds this tier in this edition.')
@@ -32,7 +32,17 @@ describe('parseDatabaseError', () => {
   })
 
   it('strips the quotes Postgres puts around reserved column names', () => {
-    expect(parseDatabaseError(uniqueViolation('Translation', ['locale', '"table"', 'record_id', 'field']))?.message).toBe('A translation for this field already exists in this locale.')
+    const error = parseDatabaseError(uniqueViolation('Translation', ['locale', '"table"', 'record_id', 'field']))
+    expect(error?.message).toBe('A translation for this field already exists in this locale.')
+    expect(error !== undefined && violatesUniqueKey(error, ['locale', 'table', 'record_id', 'field'])).toBe(true)
+  })
+
+  it('tells one unique key from another by its columns', () => {
+    const error = parseDatabaseError(uniqueViolation('Restaurant', ['google_place_ref']))
+    expect(error !== undefined && violatesUniqueKey(error, ['google_place_ref'])).toBe(true)
+    expect(error !== undefined && violatesUniqueKey(error, ['slug'])).toBe(false)
+    const foreignKey = parseDatabaseError(foreignKeyViolation('Award', { index: 'x_fkey' }))
+    expect(foreignKey !== undefined && violatesUniqueKey(foreignKey, [])).toBe(false)
   })
 
   it('uses the model to tell apart keys with the same columns', () => {

@@ -6,7 +6,7 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from '@repo/ui-web/primitives/sidebar'
-import { AwardIcon, LayoutDashboardIcon } from 'lucide-react'
+import { AwardIcon, LayoutDashboardIcon, UtensilsIcon } from 'lucide-react'
 import { routes } from '@/lib/routes'
 import { AppSidebarItem } from './app-sidebar-item'
 
@@ -24,6 +24,9 @@ export function AppSidebar(): JSX.Element {
           <SidebarMenu>
             <AppSidebarItem href={routes.home} icon={<LayoutDashboardIcon />}>
               Dashboard
+            </AppSidebarItem>
+            <AppSidebarItem href={routes.restaurants.list} icon={<UtensilsIcon />}>
+              Restaurants
             </AppSidebarItem>
             <AppSidebarItem href={routes.awards.list} icon={<AwardIcon />}>
               Awards

@@ -4,6 +4,10 @@ import type { Route } from 'next'
 // is also when its sidebar link appears.
 export const routes = {
   home: '/',
+  restaurants: {
+    list: '/restaurants',
+    detail: (id: string): Route<`/restaurants/${string}`> => `/restaurants/${id}`,
+  },
   awards: {
     list: '/awards',
     detail: (id: string): Route<`/awards/${string}`> => `/awards/${id}`,

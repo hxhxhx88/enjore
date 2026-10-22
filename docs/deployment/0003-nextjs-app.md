@@ -9,7 +9,7 @@ All Next.js apps will be deployed on [Vercel](https://vercel.com/). Each `*-next
 - Add the environment variable `ENABLE_EXPERIMENTAL_COREPACK=1` so Vercel installs the pnpm version pinned in `packageManager`.
   - Without it, Vercel infers pnpm from the lockfile and only maps to pnpm 10 or older, which cannot read this lockfile.
 - Add every variable defined in the app's `src/lib/env.ts` and in the env module of each `@repo/*` package it depends on, such as `packages/db/src/lib/env.ts` and `packages/email/src/lib/env.tsx`. Leave the `DEV_*` variables unset in production.
-  - `apps/admin-next`: `DATABASE_URL`, `ADMIN_BASIC_AUTH_USERNAME`, `ADMIN_BASIC_AUTH_PASSWORD` and `RUNNER_SECRET_CLAUDE`, whose setup is in `docs/deployment/0004-claude-connector.md`. The admin does not start while one is missing.
+  - `apps/admin-next`: `DATABASE_URL`, `ADMIN_BASIC_AUTH_USERNAME`, `ADMIN_BASIC_AUTH_PASSWORD`, `RUNNER_SECRET_CLAUDE`, whose setup is in `docs/deployment/0004-claude-connector.md`, and `GOOGLE_PLACES_API_KEY` and `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`, whose setup is in `docs/deployment/0005-google-maps.md`. The admin does not start while one is missing.
   - `apps/app-next`: `APP_ORIGIN`, `DATABASE_URL`, `SESSION_TTL_DAYS` (optional, 30 by default) and the email variables in `docs/deployment/0002-email-service.md`.
   - **Use the pooling connection string** for `DATABASE_URL`.
 - Confirm deployment.

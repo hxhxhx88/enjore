@@ -21,10 +21,19 @@ const schemaError = z.object({
   }),
 })
 
-interface DatabaseError {
-  kind: 'unique' | 'foreign-key'
+interface DatabaseErrorUnique {
+  kind: 'unique'
+  // The database columns of the violated key, so a caller can tell one key from another; empty when unknown.
+  columns: readonly string[]
   message: string
 }
+
+interface DatabaseErrorForeignKey {
+  kind: 'foreign-key'
+  message: string
+}
+
+export type DatabaseError = DatabaseErrorUnique | DatabaseErrorForeignKey
 
 interface UniqueKey {
   columns: readonly string[]
@@ -64,6 +73,11 @@ function sameColumns(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((column, i) => column === b[i])
 }
 
+// Whether the error is a unique violation on exactly these database columns.
+export function violatesUniqueKey(error: DatabaseError, columns: readonly string[]): boolean {
+  return error.kind === 'unique' && sameColumns(error.columns, columns)
+}
+
 // Turns a database error into a message the operator can act on, or `undefined` for anything that is not a constraint
 // violation, which the caller rethrows. See `docs/development/0003-coding/runtime-error-handling.md`.
 export function parseDatabaseError(e: unknown): DatabaseError | undefined {
@@ -82,10 +96,11 @@ export function parseDatabaseError(e: unknown): DatabaseError | undefined {
         : []
       const key = uniqueKeys.find(k => sameColumns(k.columns, columns) && (k.model === undefined || k.model === modelName))
       if (key) {
-        return { kind: 'unique', message: key.message }
+        return { kind: 'unique', columns, message: key.message }
       }
       return {
         kind: 'unique',
+        columns,
         message: columns.length === 0
           ? `${model}: a value that must be unique is already in use.`
           : `${model}: a record with the same ${columns.join(', ')} already exists.`,

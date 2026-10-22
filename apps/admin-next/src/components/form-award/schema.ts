@@ -1,10 +1,9 @@
-import { localeTagSchema } from '@repo/lib/schemas/locale-tag'
 import { z } from 'zod'
-import { optionalUrlSchema, slugSchema, trimmedText } from '@/lib/form-schemas'
+import { localeTagFormSchema, optionalUrlSchema, slugSchema, trimmedText } from '@/lib/form-schemas'
 
 export const formSchema = z.object({
   name: trimmedText.min(1, 'Name is required.').max(200, 'Keep the name under 200 characters.'),
-  nameLocale: trimmedText.refine(value => localeTagSchema.safeParse(value).success, 'Use a lowercase BCP 47 tag like en-us or zh-cn.'),
+  nameLocale: localeTagFormSchema,
   shortName: trimmedText.max(50, 'Keep the short name under 50 characters.'),
   slug: slugSchema,
   website: optionalUrlSchema,
